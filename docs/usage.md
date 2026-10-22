@@ -20,6 +20,8 @@ Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both colum
 
 Choose **Standard**, **Large**, or **Extra large** under **Prayer text size** to increase prayer names and times. The layout adds row spacing and fits longer labels within the circle. Your choice is saved in this browser and used for PNG exports.
 
+Choose **Wide** under **Table width** to spread the prayer names and times across more of the circle, with larger lettering where space allows. Combine it with prayer text size. Rows narrow near the circle's edges to protect the crop. Existing saved designs keep **Standard** width.
+
 A message below the full preview warns when text has been substantially reduced to fit. Shorten names or labels, use fewer rows, or show one time column to give that text more room.
 
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.

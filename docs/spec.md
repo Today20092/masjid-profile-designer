@@ -28,6 +28,7 @@ Maintain a masjid schedule, preview it inside a circle, download a 1080 by 1080 
 - Keep prayer rows compact with the name and editable iqamah value on one row. Expand per-prayer options for fixed/delayed mode, relative wording, and adhan adjustments.
 - Six polished preset artwork themes: emerald, midnight, ivory, plum, rose, charcoal. Future customization uses theme tokens separated from schedule data; do not build arbitrary color/font/logo controls now.
 - Prayer text size presets: standard, large, and extra large. Increase prayer names and clock times while fitting long text and crowded layouts inside the circular crop. Preserve standard size for older saved settings.
+- Independent standard/wide table width presets. Wide uses more of the circle and increases lettering where row height allows; keep rows inside the circular crop and preserve standard width for older saved settings.
 - Circular boundary with generous inset, readable rows and names, optional footer, and a small circular WhatsApp-size preview. The PNG and main preview use the same drawing implementation and locally bundled fonts.
 - Canvas export with Arabic shaping, fixed 1080px dimensions independent of device pixel ratio. Show an error if download fails and prevent export when settings are invalid.
 

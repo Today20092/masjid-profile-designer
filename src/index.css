@@ -125,7 +125,7 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .mobile-edit-preview [data-slot="button"] { font-size: 12px; padding-inline: 8px; }
 [data-preview-pinned="true"] .editor-column [id] { scroll-margin-top: 250px; }
 .fit-warning { color: var(--foreground); font-size: 14px; line-height: 1.6; margin: 12px 0; }
-.editor-section { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 22px 18px; }
+.editor-section { isolation: isolate; background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 22px 18px; }
 .editor-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 25px; }
 .editor-heading h2 { font-size: 16px; letter-spacing: -.4px; font-weight: 750; margin: 0; }
 .editor-heading p { color: var(--muted-foreground); font-size: 14px; line-height: 1.6; margin: 5px 0 0; }

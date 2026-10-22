@@ -11,6 +11,10 @@ const withoutTextSize = JSON.parse(JSON.stringify(settings))
 delete withoutTextSize.textSize
 assert.equal(validateSettings(withoutTextSize).textSize, 'standard')
 assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'extra')
+const withoutTableWidth = { ...settings, tableWidth: undefined }
+assert.equal(validateSettings(withoutTableWidth).tableWidth, 'standard')
+assert.equal(validateSettings({ ...settings, tableWidth: 'wide' }).tableWidth, 'wide')
+assert.throws(() => validateSettings({ ...settings, tableWidth: 'extra' }), /table width/)
 for (const theme of THEME_IDS) assert.equal(validateSettings({ ...settings, theme }).theme, theme)
 assert.throws(() => validateSettings({ ...settings, theme: 'missing' }), /theme/)
 assert.throws(() => validateSettings({ ...settings, textSize: 'huge' }), /text size/)
