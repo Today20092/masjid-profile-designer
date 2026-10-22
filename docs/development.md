@@ -25,6 +25,8 @@ pnpm preview
 
 Artwork themes keep visual values separate from schedule content. Add later customization when a specific control is needed; no generic theme editor is required.
 
+[Impeccable design tooling](impeccable.md) is installed locally for Codex reviews and polish passes, with automatic hooks disabled.
+
 Fonts are bundled with the app. Export waits for the fonts and draws text into the canvas so the PNG does not depend on fonts installed on the recipient's phone.
 
 ## GitHub Pages

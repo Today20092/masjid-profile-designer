@@ -123,7 +123,7 @@ export default function App() {
       <span className="privacy-note"><LockKeyhole aria-hidden="true" /><span>Made on your device</span></span>
     </header>
     <main id="main" className="studio-shell">
-      <section className="intro" aria-labelledby="page-title"><p className="eyebrow">A LITTLE IMAGE. A SHARED RHYTHM.</p><h1 id="page-title">A clearer way<br className="desktop-break" /> to gather.</h1><p>Your masjid’s prayer times, beautifully in one circle.<br className="desktop-break" /> Make it yours. Share it with your community.</p></section>
+      <section className="intro" aria-labelledby="page-title"><h1 id="page-title">A clearer way<br className="desktop-break" /> to gather.</h1><p>Your masjid’s prayer times, beautifully in one circle.<br className="desktop-break" /> Make it yours. Share it with your community.</p></section>
       <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title"><div className="preview-sticky">
           <div className="section-topline"><h2 id="preview-title">Your profile image</h2><span className="live-label"><span />Live preview</span></div>
@@ -145,7 +145,7 @@ export default function App() {
             {exportError && <Alert variant="destructive"><CircleHelp /><AlertTitle>Download did not finish</AlertTitle><AlertDescription>{exportError}</AlertDescription></Alert>}
           </div>}
           <section className="editor-section" aria-labelledby="identity-heading">
-            <div className="editor-heading"><span className="step-number">01</span><div><h2 id="identity-heading">Your masjid</h2><p>A familiar name for your community.</p></div></div>
+            <div className="editor-heading"><div><h2 id="identity-heading">Your masjid</h2><p>A familiar name for your community.</p></div></div>
             <FieldGroup>
               <Field><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} /></Field>
               <Field><FieldLabel htmlFor="name-ar">Name in Arabic</FieldLabel><Input id="name-ar" lang="ar" dir="rtl" maxLength={64} value={settings.nameAr} onChange={e => update('nameAr', e.target.value)} /></Field>
@@ -153,7 +153,7 @@ export default function App() {
             </FieldGroup>
           </section>
           <section className="editor-section" aria-labelledby="times-heading">
-            <div className="editor-heading"><span className="step-number">02</span><div><h2 id="times-heading">Prayer times</h2><p>Your iqamah. Your community’s rhythm.</p></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
+            <div className="editor-heading"><div><h2 id="times-heading">Prayer times</h2><p>Your iqamah. Your community’s rhythm.</p></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
             <p className="section-description">Edit iqamah times below. Open a prayer’s options for delays and adhan adjustments.</p>
             <FieldSet className="prayer-rows"><FieldLegend className="sr-only">Prayers to display</FieldLegend>
               {PRAYERS.map(item => {
@@ -183,7 +183,7 @@ export default function App() {
             <Button variant="outline" className="add-row" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={() => update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: 'Additional prayer', ar: 'صلاة إضافية', time: '13:30', enabled: true }])}><Plus data-icon="inline-start" />Add a custom row</Button>
           </section>
           <section className="editor-section" aria-labelledby="appearance-heading">
-            <div className="editor-heading"><span className="step-number">03</span><div><h2 id="appearance-heading">Make it feel like home</h2><p>Thoughtful themes. Beautiful in every language.</p></div></div>
+            <div className="editor-heading"><div><h2 id="appearance-heading">Make it feel like home</h2><p>Thoughtful themes. Beautiful in every language.</p></div></div>
             <FieldGroup>
               <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup type="single" className="theme-options" aria-labelledby="theme-label" value={settings.theme} onValueChange={value => { if (value === 'emerald' || value === 'midnight' || value === 'ivory') update('theme', value) }}>{(['emerald', 'midnight', 'ivory'] as const).map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className={`theme-swatch theme-${theme}`} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{theme === 'emerald' ? 'Emerald' : theme === 'midnight' ? 'Midnight' : 'Ivory'}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}</ToggleGroup></Field>
               <Field><FieldLabel id="language-label">Language</FieldLabel><ToggleGroup type="single" variant="outline" className="segmented" aria-labelledby="language-label" value={settings.language} onValueChange={value => { if (value === 'en' || value === 'ar' || value === 'both') update('language', value) }}><ToggleGroupItem value="en">English</ToggleGroupItem><ToggleGroupItem value="ar" lang="ar">العربية</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field>
