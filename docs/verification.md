@@ -13,6 +13,7 @@ Checked October 21, 2026, against the first implementation specification.
 - Device-location success handling was checked with simulated coordinates. The real browser's location-permission failure produced a recoverable message.
 - The main canvas exposes a separate accessible timetable description. The miniature preview is hidden from accessibility APIs.
 - Dependency audit reports zero vulnerabilities. Markdown file links resolve; README badge image URLs return valid SVG images.
+- [GitHub Actions build and deploy](https://github.com/Today20092/masjid-profile-designer/actions/runs/39708172620) both succeeded. The [live Pages site](https://today20092.github.io/masjid-profile-designer/) passed the 360px layout/runtime check and downloaded a valid 1080px PNG with its deployed fonts.
 
 ## Standards review
 
