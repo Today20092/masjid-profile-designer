@@ -52,7 +52,7 @@
 }
 @layer base {
   * { @apply border-border outline-ring/50; box-sizing: border-box; }
-  body { @apply bg-background text-foreground; margin: 0; min-width: 320px; -webkit-font-smoothing: antialiased; }
+  body { @apply bg-background text-foreground; margin: 0; -webkit-font-smoothing: antialiased; }
   button, input { font: inherit; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
@@ -164,6 +164,9 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 }
 @media (max-width: 340px) {
   .editor-section { padding-inline: 14px; }
+  .prayer-main { grid-template-columns: minmax(0, 1fr) 112px 44px; gap: 0; }
+  .prayer-main .prayer-heading { gap: 2px; }
+  .compact-value [data-slot="input"] { padding-inline: 4px; }
 }
 .add-row { margin-top: 14px; width: 100%; }
 .theme-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 10px; align-items: stretch; }
@@ -193,7 +196,8 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .notices { display: flex; flex-direction: column; gap: 12px; }
 .storage-acknowledge { margin-top: 12px; white-space: normal; height: auto; width: 100%; }
 .site-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 11px; }
-.mobile-download { position: fixed; bottom: 0; left: 0; right: 0; padding: 10px 20px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--background); display: flex; flex-direction: column; gap: 6px; z-index: 20; }
+/* Keep fixed controls aligned with the page when Radix reserves a hidden scrollbar. */
+.mobile-download { position: fixed; bottom: 0; left: 0; right: var(--removed-body-scroll-bar-size, 0px); padding: 10px 20px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--background); display: flex; flex-direction: column; gap: 6px; z-index: 20; }
 .mobile-actions { display: flex; gap: 6px; width: 100%; }
 .mobile-actions [data-slot="button"] { min-height: 48px; padding-inline: 10px; font-size: 14px; }
 .mobile-actions button { flex: 1; }
@@ -202,8 +206,17 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .mobile-feedback p { margin: 0; }
 .mobile-feedback [data-slot="button"] { padding-inline: 8px; flex-shrink: 0; }
 .mobile-feedback a { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 380px) {
+  .mobile-download { padding-inline: 12px; }
+}
+@supports (scrollbar-gutter: stable) {
+  html { scrollbar-gutter: stable; }
+  /* The root already reserves this space; a second scroll-lock margin would shift the page. */
+  html body[data-scroll-locked] { margin-right: 0 !important; }
+  .mobile-download { right: 0; }
+}
 body:has(input:focus) .mobile-download { display: none; }
-@media (min-width: 700px) {
+@media (min-width: 900px) {
   .download-button { display: inline-flex; }
   .masthead { padding-inline: 40px; }
   .studio-shell { padding: 40px 36px 40px; }

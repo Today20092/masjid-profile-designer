@@ -55,3 +55,11 @@ Plum, Rose, and Charcoal join the three original themes. All six were selected, 
 Workflow checks covered early editing links, opening calculation settings from visible guidance, field-linked numeric errors, multiple undo steps, restoring a removed custom row, the mobile preview link, PNG success feedback beside the action, and responsive action buttons at 320–1440px. The undo history is limited to the current tab session and is not persisted.
 
 The follow-up adds an optional sticky preview while editing, groups typing into one history step per field visit, supports redo, and links error recovery to the affected input. Browser assertions confirmed live preview pixels change after a time edit, typing coalesces into one undo step, redo restores it, new edits clear redo, and long names trigger the fitting warning while short names clear it. Ivory's muted text and accent were darkened after the independent palette review found insufficient small-text contrast.
+
+## Stable controls and dropdowns
+
+Opening the shared dropdown previously scaled its contents from 95%, moving text sideways by approximately 11px. Frame-by-frame browser assertions reproduced that movement before replacing zoom/slide effects with a stationary fade. Shared buttons no longer translate downward while pressed.
+
+Classic-scrollbar testing also reproduced a 16px widening of the fixed action bar and a 29px page-scroll nudge when a dropdown closed near the bottom. Reserving the root scrollbar gutter and avoiding duplicate scroll-lock compensation keeps the document and fixed controls at a consistent width. Browsers without gutter support retain fixed-bar scrollbar compensation.
+
+Regression checks cover all eight dropdowns opening and closing at 320, 360, 690, 700, 900, and 1280px, with conventional scrollbars and hidden scrollbars. Measurements include popup frames, page sections, preview, and fixed action bar. Theme selection and held button presses are checked for movement as well. Narrow layouts fit the available content width rather than forcing a 320px body inside a reserved gutter; the two-column editor starts at 900px to leave enough room for prayer labels and time controls. Intentional accordion expansion and changes to the preview image remain part of normal editing.
