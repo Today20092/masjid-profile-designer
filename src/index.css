@@ -105,7 +105,7 @@
 .whatsapp-example p { margin: 5px 0 0; color: var(--muted-foreground); font-size: 10px; }
 .example-check { margin-left: auto; width: 16px; height: 16px; flex-shrink: 0; color: var(--gold); }
 .download-area { padding-top: 24px; text-align: center; }
-.download-button { width: 100%; min-height: 52px; }
+.download-button { display: none; width: 100%; min-height: 52px; }
 .download-area p { margin: 11px 0 0; color: var(--muted-foreground); font-size: 10px; line-height: 1.6; }
 .how-to { font-size: 11px; line-height: 1.8; color: var(--muted-foreground); text-align: center; max-width: 350px; margin: 20px auto 0; }
 .sample-note { display: flex; align-items: flex-start; gap: 7px; color: var(--muted-foreground); font-size: 11px; line-height: 1.7; margin: 20px 0 0; padding: 13px 15px; border: 1px solid var(--border); border-radius: 10px; }
@@ -168,6 +168,7 @@
 .mobile-download > span { font-size: 9px; color: var(--muted-foreground); }
 body:has(input:focus) .mobile-download { display: none; }
 @media (min-width: 700px) {
+  .download-button { display: inline-flex; }
   .masthead { padding-inline: 40px; }
   .studio-shell { padding: 55px 36px 40px; }
   .intro { margin-bottom: 50px; }

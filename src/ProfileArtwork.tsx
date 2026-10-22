@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { DisplayRow, Settings, ThemeId } from './model'
 
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
@@ -135,8 +135,9 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     }
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
-    text(ctx, primaryLabel, labelX, bilingual ? y - 13 : y, bothColumns ? 200 : 246, bilingual ? 29 : 38, theme.ink, primaryArabic, 700)
-    if (bilingual && row.ar) text(ctx, row.ar, labelX, y + 18, bothColumns ? 200 : 246, 28, theme.muted, true)
+    const secondaryLabel = bilingual && row.ar && row.en
+    text(ctx, primaryLabel, labelX, secondaryLabel ? y - 13 : y, bothColumns ? 200 : 246, bilingual ? 29 : 38, theme.ink, primaryArabic, 700)
+    if (secondaryLabel) text(ctx, row.ar, labelX, y + 18, bothColumns ? 200 : 246, 28, theme.muted, true)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => text(ctx, value || '—', timeX[column], y, bothColumns ? 162 : 265, bothColumns ? 35 : 45, column === values.length - 1 ? theme.gold : theme.ink, false, 700))
   })
@@ -152,6 +153,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
 
 export function ProfileArtwork({ settings, rows, className }: { settings: Settings; rows: DisplayRow[]; className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const descriptionId = useId()
   const [error, setError] = useState('')
   useEffect(() => {
     let cancelled = false
@@ -165,9 +167,15 @@ export function ProfileArtwork({ settings, rows, className }: { settings: Settin
     return () => { cancelled = true }
   }, [settings, rows])
   return <>
-    <canvas ref={canvasRef} width={SIZE} height={SIZE} className={className} aria-label="Prayer timetable preview" role="img" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '50%' }}>
-      {settings.name} {settings.nameAr}. {rows.map(row => `${row.en} ${row.ar}: Adhan ${row.adhan}; Iqamah ${row.iqamah}`).join('. ')}
-    </canvas>
+    <canvas ref={canvasRef} width={SIZE} height={SIZE} className={className} aria-label="Prayer timetable preview" aria-describedby={descriptionId} role="img" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '50%' }} />
+    <p id={descriptionId} className="sr-only">
+      {settings.name} {settings.nameAr}. {settings.date}. {!settings.confirmed && 'Sample schedule. Confirm prayer times before sharing.'}
+      {rows.map(row => {
+        const label = settings.language === 'ar' ? row.ar || row.en : settings.language === 'en' ? row.en || row.ar : [row.en, row.ar].filter(Boolean).join(' ')
+        const times = settings.timeDisplay === 'both' ? `Adhan ${row.adhan}; Iqamah ${row.iqamah}` : settings.timeDisplay === 'adhan' ? `Adhan ${row.adhan}` : `Iqamah ${row.iqamah}`
+        return `${label}: ${times}.`
+      }).join(' ')}
+    </p>
     {error && <p role="alert">{error}</p>}
   </>
 }
