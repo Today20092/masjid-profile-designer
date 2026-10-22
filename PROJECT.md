@@ -12,10 +12,11 @@ A simple, customizable website intended for GitHub Pages that produces attractiv
 - Support both calculated adhan with adjustments and iqamah settings, including fixed times and delays after adhan. Exact editing behavior remains a design decision.
 - Support any masjid, with the user's masjid as the first example and validation case.
 - Start with polished themes and defaults. Plan for later customization; defer its controls.
+- Mobile-first editor using Tailwind CSS and selected shadcn/ui components. Verify phone-width editing and PNG export.
 
 ## Planning status
 
-The [wayfinder map](planning/map.md) tracks the remaining decisions. No website implementation or publication has started. The user's masjid details, calculation defaults, exact time-editing behavior, and circle layout still need resolution.
+The user authorized implementing all tickets and publishing a public GitHub Pages site. The [implementation specification](docs/spec.md) records the chosen starting defaults and verification scope; the [wayfinder map](planning/map.md) tracks ticket resolutions.
 
 ## First masjid
 
