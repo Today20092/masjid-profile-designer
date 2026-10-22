@@ -12,11 +12,12 @@ A build-ready specification for a simple GitHub Pages website that creates attra
 
 ## Notes
 
-- Planning only, following the wayfinder, grilling, and domain-modeling skills. Use prototype when resolving the visual ticket.
+- The user authorized implementing all tickets, full project setup, a public repository, and GitHub Pages. This replaces the earlier planning-only and one-ticket-per-session limits. [Implementation specification](../docs/spec.md).
 - Confirmed requirements live in [PROJECT.md](../PROJECT.md); terminology lives in [GLOSSARY.md](../GLOSSARY.md).
 - Any masjid is supported; the user's masjid is the first example and validation case.
 - The WhatsApp photo is the masjid's usual iqamah publication. The editor creates its replacement from maintainer-entered congregation times; finding an external current timetable is not a prerequisite.
 - Automatic times with adjustments; user-selected rows; Arabic, English, and bilingual layouts.
+- Mobile-first is required. Use React, Tailwind CSS, and selected shadcn/ui controls.
 - Themes and defaults first. Later customization is a design consideration, not a reason to build controls or a plugin system now.
 - No remote issue tracker was supplied. Use the [local Markdown tracker](TRACKER.md). `/setup-matt-pocock-skills` can configure a different tracker later.
 - The source screenshot contains personal details and must not become a public site asset.
@@ -33,5 +34,5 @@ No decision tickets have been resolved. Initial requirements are recorded in the
 
 ## Out of scope
 
-- Building or publishing the website during this charting session.
+- Automatic changes to the WhatsApp group photo; the maintainer uploads the exported PNG.
 - Advanced visual customization controls in the first version.
