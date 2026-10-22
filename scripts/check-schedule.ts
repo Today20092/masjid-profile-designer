@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { createDefaults, getDisplayRows, validateSettings } from '../src/schedule.ts'
+import { THEME_IDS } from '../src/model.ts'
 
 const settings = createDefaults()
 settings.date = '2026-10-21'
@@ -10,6 +11,8 @@ const withoutTextSize = JSON.parse(JSON.stringify(settings))
 delete withoutTextSize.textSize
 assert.equal(validateSettings(withoutTextSize).textSize, 'standard')
 assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'extra')
+for (const theme of THEME_IDS) assert.equal(validateSettings({ ...settings, theme }).theme, theme)
+assert.throws(() => validateSettings({ ...settings, theme: 'missing' }), /theme/)
 assert.throws(() => validateSettings({ ...settings, textSize: 'huge' }), /text size/)
 assert.equal(getDisplayRows(settings).find(row => row.id === 'dhuhr')?.iqamah, '13:45')
 assert.throws(() => validateSettings({ ...settings, date: '2026-02-30' }), /date/i)

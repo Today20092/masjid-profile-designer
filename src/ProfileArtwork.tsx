@@ -4,7 +4,10 @@ import type { DisplayRow, Settings, ThemeId } from './model'
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
   emerald: { name: 'Emerald', background: '#103e36', surface: '#194b41', ink: '#fff8e8', muted: '#b6c9bc', gold: '#e5bd7c' },
   midnight: { name: 'Midnight', background: '#172838', surface: '#20384a', ink: '#f9f5e9', muted: '#b7c2cb', gold: '#dcc099' },
-  ivory: { name: 'Ivory', background: '#f6efdf', surface: '#fff9ed', ink: '#183f36', muted: '#647368', gold: '#927038' },
+  ivory: { name: 'Ivory', background: '#f6efdf', surface: '#fff9ed', ink: '#183f36', muted: '#526257', gold: '#795b2b' },
+  plum: { name: 'Plum', background: '#32223f', surface: '#463052', ink: '#fff6ed', muted: '#d4c0db', gold: '#e6c28f' },
+  rose: { name: 'Rose', background: '#f5e8e5', surface: '#fff5f0', ink: '#542d3b', muted: '#78505d', gold: '#8b4056' },
+  charcoal: { name: 'Charcoal', background: '#25292b', surface: '#343a3c', ink: '#fff9ed', muted: '#cad0ca', gold: '#e0c595' },
 }
 
 const SIZE = 1080
@@ -21,6 +24,7 @@ async function loadFonts() {
 }
 
 function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string, arabic = false, weight = 500) {
+  const intendedSize = size
   ctx.fillStyle = color
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -32,6 +36,7 @@ function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number
     ctx.font = `${weight} ${size}px ${family}`
   }
   ctx.fillText(value, x, y, width)
+  if (size < intendedSize * 0.75) ctx.canvas.dataset.fitWarning = 'true'
 }
 
 function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, arabic: boolean) {
@@ -51,6 +56,21 @@ function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, a
   return words.length > 1 ? [words.slice(0, split).join(' '), words.slice(split).join(' ')] : [value]
 }
 
+function clockText(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string) {
+  const clock = /^(\d{1,2}:\d{2}) (AM|PM)$/.exec(value)
+  if (!clock) return text(ctx, value || '—', x, y, width, size, color, false, 700)
+  const measure = (value: string, pixels: number) => {
+    ctx.font = `700 ${pixels}px ${ENGLISH}`
+    return ctx.measureText(value).width
+  }
+  while (measure(clock[1], size) + measure(clock[2], size * 0.45) + size * 0.16 > width && size > 10) size -= 1
+  const digitsWidth = measure(clock[1], size)
+  const suffixWidth = measure(clock[2], size * 0.45)
+  const left = x - (digitsWidth + suffixWidth + size * 0.16) / 2
+  text(ctx, clock[1], left + digitsWidth / 2, y, digitsWidth + 1, size, color, false, 700)
+  text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.45, color, false, 700)
+}
+
 function relativeWording(minutes: number, language: Settings['language']) {
   const english = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
   const arabic = minutes === 1 ? 'دقيقة واحدة' : minutes === 2 ? 'دقيقتان' : `${minutes} ${minutes >= 3 && minutes <= 10 ? 'دقائق' : 'دقيقة'}`
@@ -63,6 +83,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   if (!ctx) throw new Error('Your browser could not create the profile image. Please try another browser.')
   canvas.width = SIZE
   canvas.height = SIZE
+  delete canvas.dataset.fitWarning
   const theme = ARTWORK_THEMES[settings.theme]
   const gradient = ctx.createRadialGradient(410, 240, 30, 540, 540, 760)
   gradient.addColorStop(0, theme.surface)
@@ -122,7 +143,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const scale = settings.textSize === 'extra' ? 1.35 : settings.textSize === 'large' ? 1.18 : 1
   const labelX = bothColumns ? 326 : 350
   const timeX = bothColumns ? (scale > 1 ? [570, 790] : [598, 775]) : [716]
-  const timeWidth = bothColumns ? (scale > 1 ? 190 : 162) : 265
+  const timeWidth = bothColumns ? (scale > 1 ? 190 : 162) : 290
   const headingY = 332
   const headings = bothColumns
     ? (arabicOnly ? ['الأذان', 'الإقامة'] : ['ADHAN', 'IQAMAH'])
@@ -135,7 +156,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   rows.forEach((row, index) => {
     const y = firstY + index * gap
     if (index % 2 === 0) {
-      ctx.globalAlpha = settings.theme === 'ivory' ? 0.05 : 0.045
+      ctx.globalAlpha = settings.theme === 'ivory' || settings.theme === 'rose' ? 0.05 : 0.045
       ctx.fillStyle = theme.ink
       ctx.beginPath()
       ctx.roundRect(218, y - gap / 2 + 3, 644, gap - 6, 12)
@@ -145,15 +166,15 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
-    const labelSize = Math.min((bilingual ? 29 : 38) * scale, gap * (secondaryLabel ? 0.47 : 0.7))
-    text(ctx, primaryLabel, labelX, secondaryLabel ? y - 13 * scale : y, bothColumns ? 200 : 246, labelSize, theme.ink, primaryArabic, 700)
-    if (secondaryLabel) text(ctx, row.ar, labelX, y + 18 * scale, bothColumns ? 200 : 246, Math.min(28 * scale, gap * 0.47), theme.muted, true)
+    const labelSize = Math.min((bilingual ? 29 : 38) * scale, gap * (secondaryLabel ? 0.43 : 0.7))
+    text(ctx, primaryLabel, labelX, secondaryLabel ? y - Math.min(13 * scale, gap * 0.25) : y, bothColumns ? 200 : 246, labelSize, theme.ink, primaryArabic, 700)
+    if (secondaryLabel) text(ctx, row.ar, labelX, y + Math.min(18 * scale, gap * 0.28), bothColumns ? 200 : 246, Math.min(28 * scale, gap * 0.43), theme.ink, true, 700)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => {
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
       if (relative) {
-        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, timeX[column], y + (index === 0 ? -12 : 17) * Math.min(scale, gap / 64), timeWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale, gap * 0.47), index === 0 ? theme.gold : theme.muted, line.arabic, index === 0 ? 700 : 500))
-      } else text(ctx, value || '—', timeX[column], y, timeWidth, Math.min((bothColumns ? 35 : 45) * scale, gap * 0.82), column === values.length - 1 ? theme.gold : theme.ink, false, 700)
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, timeX[column], y + (index === 0 ? -14 : 20) * Math.min(scale, gap / 64), timeWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale, gap * 0.47), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
+      } else clockText(ctx, value, timeX[column], y, timeWidth, Math.min((bothColumns ? 44 : 56) * scale, gap * 0.82), column === values.length - 1 ? theme.gold : theme.ink)
     })
   })
 
@@ -163,7 +184,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[\u0600-\u06ff]/.test(settings.footer))
 }
 
-export function ProfileArtwork({ settings, rows, className }: { settings: Settings; rows: DisplayRow[]; className?: string }) {
+export function ProfileArtwork({ settings, rows, className, onFitWarning }: { settings: Settings; rows: DisplayRow[]; className?: string; onFitWarning?: (warning: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const descriptionId = useId()
   const [error, setError] = useState('')
@@ -172,12 +193,13 @@ export function ProfileArtwork({ settings, rows, className }: { settings: Settin
     loadFonts().then(() => {
       if (cancelled || !canvasRef.current) return
       drawProfile(canvasRef.current, settings, rows)
+      onFitWarning?.(canvasRef.current.dataset.fitWarning === 'true')
       setError('')
     }).catch(() => {
       if (!cancelled) setError('The preview could not load. Refresh the page and try again.')
     })
     return () => { cancelled = true }
-  }, [settings, rows])
+  }, [settings, rows, onFitWarning])
   return <>
     <canvas ref={canvasRef} width={SIZE} height={SIZE} className={className} aria-label="Prayer timetable preview" aria-describedby={descriptionId} role="img" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '50%' }} />
     <p id={descriptionId} className="sr-only">

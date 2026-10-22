@@ -45,3 +45,13 @@ The user requested removing the sample label. The watermark, sample notice, conf
 ## Prayer text size presets
 
 Standard, Large, and Extra large are saved with the design and applied to both previews and exports. Browser checks measured the default clock text at 45px, 53.1px, and 60.75px respectively. They also covered saved-state restoration, PNG download, eight rows, Arabic, two time columns, and measured text bounds inside the circular crop. Older saved designs default to Standard.
+
+## Impeccable typography, palettes, and workflow follow-up
+
+The typography pass gives clock numerals greater emphasis and AM/PM a smaller supporting role. Measured six-row English numeral sizes are now 56px, 66.08px, and approximately 70.25px, subject to width and row-spacing limits. Arabic secondary labels use the existing bold face, and bilingual baselines follow the available row gap. A measured-bounds browser check covered 36 language/size/row-count/column combinations without text collisions or text outside the safe circle, plus a 200% zoom layout check.
+
+Plum, Rose, and Charcoal join the three original themes. All six were selected, restored after reload, and produced distinct rendered images. New palette text contrast was calculated against both surface endpoints before browser inspection.
+
+Workflow checks covered early editing links, opening calculation settings from visible guidance, field-linked numeric errors, multiple undo steps, restoring a removed custom row, the mobile preview link, PNG success feedback beside the action, and responsive action buttons at 320–1440px. The undo history is limited to the current tab session and is not persisted.
+
+The follow-up adds an optional sticky preview while editing, groups typing into one history step per field visit, supports redo, and links error recovery to the affected input. Browser assertions confirmed live preview pixels change after a time edit, typing coalesces into one undo step, redo restores it, new edits clear redo, and long names trigger the fitting warning while short names clear it. Ivory's muted text and accent were darkened after the independent palette review found insufficient small-text contrast.

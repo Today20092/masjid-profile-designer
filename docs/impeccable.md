@@ -21,3 +21,9 @@ The editor keeps its existing green-and-cream identity. The pass removed decorat
 Verification covered browser widths from 320 to 1440 pixels without horizontal overflow, touch expansion of prayer options, visible keyboard focus, saved settings, Arabic layouts, and a real 1080 × 1080 PNG download. At the checked phone size the preview starts at 296 pixels from the page top. Impeccable's source detector reported no findings for `src/App.tsx` and `src/index.css`. Schedule assertions and the production build passed. These browser checks do not replace testing on a physical phone.
 
 Tailwind excludes `.agents` from source scanning so examples bundled with the skill do not add unused application CSS.
+
+## Independent critique and follow-up
+
+Two independent agents reviewed design and detector/browser evidence. The heuristic assessment improved from 27/40 to 35/40 after refinement, with interim reviews at 31 and 34. Scores are design judgments, not accessibility certification. Snapshots are saved under `.impeccable/critique/`.
+
+The follow-up strengthens clock numerals and Arabic labels, fixes eight-row bilingual collisions, warns about substantially reduced text, adds Plum/Rose/Charcoal artwork themes, and darkens Ivory's muted/accent colors. Mobile users can keep a compact live preview beside their editing flow. Calculation guidance is visible; grouped undo/redo, keyboard shortcuts, and field-specific recovery improve editing confidence. The full image remains necessary for detailed proofreading. A tiny WhatsApp avatar cannot carry a fully readable timetable.

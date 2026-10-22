@@ -14,13 +14,19 @@ The image represents the selected date. It does not update itself after download
 
 Prayer rows show the name and iqamah value together. Tap the arrow beside a prayer to open its options: fixed/delayed mode, relative wording, and adhan adjustment. The main time or delay remains directly editable without opening options.
 
+Use **Edit times** and **Choose design** to jump to those controls. On a phone, **Preview** in the bottom bar keeps a compact live image visible while you edit. **Full image** returns to the larger preview; **Close preview** releases the space. **Undo** restores up to 30 recent edits in the current tab, including removed custom rows and reset. Typing in one field until you leave it counts as one edit. **Redo** restores an undone edit; a new edit clears redo. Outside text fields, use Ctrl/Cmd+Z for undo and Ctrl/Cmd+Shift+Z (or Ctrl+Y) for redo. Text fields retain normal browser editing shortcuts. History clears when you reload; the current design remains saved when browser storage is available.
+
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 
 Choose **Standard**, **Large**, or **Extra large** under **Prayer text size** to increase prayer names and times. The layout adds row spacing and fits longer labels within the circle. Your choice is saved in this browser and used for PNG exports.
 
-Emerald, midnight, and ivory are preset artwork themes. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
+A message below the full preview warns when text has been substantially reduced to fit. Shorten names or labels, use fewer rows, or show one time column to give that text more room.
+
+Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
 
 Download creates a square 1080px PNG with all essential content inside a circle. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
+
+The chat-list avatar is too small to read the full timetable. Open the group photo for the details. Fewer rows, one language, and a short masjid name leave more room for readable text.
 
 ## Saved settings and privacy
 

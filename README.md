@@ -27,7 +27,7 @@ The starting masjid is Masjid Abu Bakr in Tampa, Florida. Its editable example i
 - Phone-first editor with a live circular preview.
 - Automatic adhan calculations with per-prayer adjustments, multiple calculation methods, and standard or Hanafi Asr.
 - Fixed or delayed iqamah, with optional “minutes after adhan” wording for monthly photos, plus Jumu‘ah, optional sunrise, and custom rows.
-- English, Arabic, and bilingual artwork in three themes.
+- English, Arabic, and bilingual artwork in six themes.
 - A 1080 × 1080 PNG that matches the preview.
 - Settings saved in the same browser, with no account or timetable upload.
 

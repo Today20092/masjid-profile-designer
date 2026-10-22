@@ -8,7 +8,8 @@ export const PRAYERS = [
   { id: 'jumuah', en: "Jumu‘ah", ar: 'الجمعة' },
 ] as const
 export type PrayerId = typeof PRAYERS[number]['id']
-export type ThemeId = 'emerald' | 'midnight' | 'ivory'
+export const THEME_IDS = ['emerald', 'midnight', 'ivory', 'plum', 'rose', 'charcoal'] as const
+export type ThemeId = typeof THEME_IDS[number]
 export type Language = 'en' | 'ar' | 'both'
 export type TimeDisplay = 'iqamah' | 'adhan' | 'both'
 export type PrayerSetting = { enabled: boolean; iqamahMode: 'fixed' | 'after'; fixed: string; delay: number; adjustment: number; showRelative: boolean }

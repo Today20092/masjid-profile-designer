@@ -1,5 +1,5 @@
 import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan'
-import { MAX_ROWS, PRAYERS, type DisplayRow, type Settings } from './model'
+import { MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type Settings } from './model'
 
 export const STORAGE_KEY = 'masjid-profile-studio-v1'
 const methods = ['NorthAmerica', 'MuslimWorldLeague', 'Egyptian', 'UmmAlQura', 'Karachi', 'MoonsightingCommittee'] as const
@@ -78,7 +78,7 @@ export function validateSettings(value: unknown): Settings {
     longitude: number(s.longitude, 'Longitude', -180, 180), timezone,
     method: choice(s.method, methods, 'calculation method'), madhab: choice(s.madhab, ['standard', 'hanafi'], 'Asr convention'),
     date, language: choice(s.language, ['en', 'ar', 'both'], 'language'),
-    theme: choice(s.theme, ['emerald', 'midnight', 'ivory'], 'theme'),
+    theme: choice(s.theme, THEME_IDS, 'theme'),
     timeDisplay: choice(s.timeDisplay, ['iqamah', 'adhan', 'both'], 'time columns'),
     use24Hour: boolean(s.use24Hour, '24-hour format'),
     textSize: s.textSize === undefined ? 'standard' : choice(s.textSize, ['standard', 'large', 'extra'], 'prayer text size'),
