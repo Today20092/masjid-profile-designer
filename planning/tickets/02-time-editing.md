@@ -3,7 +3,7 @@ id: time-editing
 title: Define adhan adjustments and iqamah editing
 labels: [wayfinder:grilling]
 status: open
-assignee: null
+assignee: User
 parent: map
 blocked_by: []
 ---
