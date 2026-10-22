@@ -10,6 +10,8 @@ Create a readable prayer timetable for your masjid's WhatsApp group photo. Enter
 
 [Open the studio](https://Today20092.github.io/masjid-profile-designer/) · [Usage guide](docs/usage.md) · [Development](docs/development.md) · [Report an issue](https://github.com/Today20092/masjid-profile-designer/issues)
 
+![The studio with a circular prayer timetable preview and editable masjid details](docs/studio.png)
+
 ## Make your group photo
 
 1. Open the studio on your phone or computer.

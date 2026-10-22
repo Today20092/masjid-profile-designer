@@ -2,7 +2,7 @@
 id: map
 title: Plan the masjid prayer-time profile designer
 labels: [wayfinder:map]
-status: open
+status: closed
 assignee: null
 ---
 
@@ -24,13 +24,13 @@ A build-ready specification for a simple GitHub Pages website that creates attra
 
 ## Decisions so far
 
-No decision tickets have been resolved. Initial requirements are recorded in the project brief.
+- [Choose the first masjid and calculation defaults](tickets/01-masjid-defaults.md): Tampa starts with editable North America and standard Asr settings; the maintainer supplies iqamah.
+- [Define adhan adjustments and iqamah editing](tickets/02-time-editing.md): fixed or delayed iqamah, date-based calculation, selected rows, and protected browser saves are implemented.
+- [Choose readable circular layouts and initial themes](tickets/03-circle-design.md): three themes, three language modes, and a shared 1080px canvas renderer keep preview and export consistent.
 
 ## Not yet specified
 
-- The minimal calculation and deployment approach, once location and schedule requirements establish what is needed.
-- How much timetable content remains readable in the chosen design, and what constraints the editor needs as a result.
-- Which additional customization controls would be useful after the initial themes have been tried.
+None for this release. [The implemented specification](../docs/spec.md) records the complete first version; [verification](../docs/verification.md) records checks and limits.
 
 ## Out of scope
 

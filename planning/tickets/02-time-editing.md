@@ -2,7 +2,7 @@
 id: time-editing
 title: Define adhan adjustments and iqamah editing
 labels: [wayfinder:grilling]
-status: open
+status: closed
 assignee: User
 parent: map
 blocked_by: []
@@ -15,3 +15,7 @@ How do calculated adhan times, adjustments, fixed iqamah times, and delays after
 The user requested both approaches. Preserve calculated and editable time options; clarify the exact behavior with examples rather than choosing silently. Row selection and Arabic/English/bilingual support are already required.
 
 The user clarified the core workflow: the WhatsApp profile photo publishes iqamah times. Design for entering the masjid's schedule and quickly exporting an updated photo, with automatic calculation available for adhan. Decide how to retain a previous design and schedule between updates. An external current iqamah feed is not required.
+
+## Resolution comment, October 21, 2026
+
+Implemented [schedule behavior](../../src/schedule.ts) and the [editor](../../src/App.tsx). Adhan is calculated with per-prayer adjustments. Iqamah is fixed or delayed after adjusted adhan; date changes preserve fixed times and recalculate delayed times. Jumu‘ah is fixed, sunrise has no iqamah, and custom rows have entered times. Users choose adhan/iqamah/both and up to eight visible rows. Valid settings save in this browser; malformed stored data is protected until explicitly replaced. Schedule edits clear confirmation. [Focused checks](../../scripts/check-schedule.ts) verify the main behavior.
