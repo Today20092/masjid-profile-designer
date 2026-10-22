@@ -36,4 +36,4 @@ The checks used an emulated phone viewport, not a physical phone or a screen-rea
 - Delayed iqamah can display minutes after adhan instead of a clock time. Checks cover changed delays and dates, fixed/clock fallback, old saved settings without the new flag, and invalid flag values.
 - Browser checks cover the relative-wording toggle, save/reload, Arabic and bilingual output, and two time columns. The preview and downloaded PNG use the same wording.
 - At a 360px viewport, the collapsed prayer section is 858px high, down from 1509px. Prayer options expand individually; time inputs stay visible. Layout and export checks passed at 320, 360, 390, 700, and 1440px.
-- pnpm 12.14.0 replaces npm. The imported lockfile preserves dependency versions. Frozen-lockfile installation, schedule checks, production build, and production dependency audit passed.
+- pnpm 12.14.0 replaces npm. The imported lockfile keeps the dependency set, with Vite 8.3.4 and lucide-react 1.60.0 pinned to satisfy pnpm's 24-hour minimum release age. Frozen-lockfile installation, schedule checks, production build, and dependency audit passed.
