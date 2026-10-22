@@ -12,4 +12,4 @@ Each issue is a Markdown file with a stable `id`, `title`, `labels`, `status`, a
 - Resolution: append a dated resolution comment below the question, mark the ticket closed, and add a named link with a one-line gist to the map's Decisions so far.
 - Assets: link separate files from the ticket; do not paste their contents into it.
 
-Resolve at most one non-research ticket per session. Charting creates the map and tickets without resolving them.
+The original charting session created the map without resolving tickets. The user's later implement-spec request explicitly authorizes resolving all tickets in the implementation session.
