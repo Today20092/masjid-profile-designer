@@ -3,7 +3,7 @@ id: circle-design
 title: Choose readable circular layouts and initial themes
 labels: [wayfinder:prototype]
 status: open
-assignee: null
+assignee: User
 parent: map
 blocked_by: []
 ---
