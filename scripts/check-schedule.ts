@@ -28,6 +28,10 @@ settings.customRows.push({ id: 'class', en: 'Class', ar: '', time: '00:05', enab
 const custom = getDisplayRows(settings).find(row => row.id === 'class')!
 assert.equal(custom.iqamah, '12:05 AM')
 assert.equal(custom.adhan, custom.iqamah)
+assert.equal(custom.ar, '')
+const arabicCustom = getDisplayRows({ ...settings, customRows: [{ id: 'arabic-class', en: '', ar: 'درس', time: '13:00', enabled: true }] }).find(row => row.id === 'arabic-class')!
+assert.equal(arabicCustom.en, '')
+assert.equal(arabicCustom.ar, 'درس')
 assert.throws(() => validateSettings({ ...settings, timezone: 'Mars/Olympus' }), /timezone/i)
 assert.throws(() => validateSettings({ ...settings, latitude: NaN }), /Latitude/)
 assert.throws(() => validateSettings({ ...settings, version: 2 }), /version/i)

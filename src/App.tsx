@@ -25,7 +25,7 @@ function restore() {
 function NumberField({ id, label, value, onChange, min, max, step = 1 }: {
   id: string; label: string; value: number; onChange: (value: number) => void; min: number; max: number; step?: number | 'any'
 }) {
-  const invalid = !Number.isFinite(value) || value < min || value > max
+  const invalid = !Number.isFinite(value) || value < min || value > max || (step !== 'any' && !Number.isInteger(value))
   return <Field data-invalid={invalid}>
     <FieldLabel htmlFor={id}>{label}</FieldLabel>
     <Input id={id} type="number" inputMode={step === 'any' ? 'decimal' : 'numeric'} value={Number.isFinite(value) ? value : ''}
@@ -105,6 +105,8 @@ export default function App() {
     navigator.geolocation.getCurrentPosition(position => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       setSaved(false)
+      setDownloaded(false)
+      setExportError('')
       setSettings(current => ({ ...current, latitude: Number(position.coords.latitude.toFixed(6)), longitude: Number(position.coords.longitude.toFixed(6)), timezone, confirmed: false }))
       setLocating(false)
       setLocationNotice(`Coordinates updated. Timezone is ${timezone}, from your device. Check that it matches the masjid, and update the location label.`)
@@ -131,7 +133,7 @@ export default function App() {
             <span className="crop-note">DESIGNED TO FIT THE CIRCLE</span>
           </div>
           <div className="whatsapp-example">
-            {result.settings && <div className="mini-artwork"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
+            {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>How your group photo will look</p></div><Check className="example-check" aria-hidden="true" />
           </div><Separator />
           <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}><ArrowDownToLine data-icon="inline-start" />{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
@@ -147,9 +149,9 @@ export default function App() {
           <section className="editor-section" aria-labelledby="identity-heading">
             <div className="editor-heading"><span className="step-number">01</span><div><h2 id="identity-heading">Your masjid</h2><p>A familiar name for your community.</p></div></div>
             <FieldGroup>
-              <Field><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" maxLength={70} value={settings.name} onChange={e => update('name', e.target.value)} /></Field>
-              <Field><FieldLabel htmlFor="name-ar">Name in Arabic</FieldLabel><Input id="name-ar" lang="ar" dir="rtl" maxLength={70} value={settings.nameAr} onChange={e => update('nameAr', e.target.value)} /></Field>
-              <FieldGroup className="two-fields"><Field><FieldLabel htmlFor="location">Location label</FieldLabel><Input id="location" maxLength={70} value={settings.location} onChange={e => update('location', e.target.value)} /></Field><Field><FieldLabel htmlFor="date">Timetable date</FieldLabel><Input id="date" type="date" value={settings.date} onChange={e => update('date', e.target.value)} /></Field></FieldGroup>
+              <Field><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} /></Field>
+              <Field><FieldLabel htmlFor="name-ar">Name in Arabic</FieldLabel><Input id="name-ar" lang="ar" dir="rtl" maxLength={64} value={settings.nameAr} onChange={e => update('nameAr', e.target.value)} /></Field>
+              <FieldGroup className="two-fields"><Field><FieldLabel htmlFor="location">Location label</FieldLabel><Input id="location" maxLength={70} value={settings.location} onChange={e => update('location', e.target.value)} /></Field><Field><FieldLabel htmlFor="date">Timetable date</FieldLabel><Input id="date" type="date" min="1900-01-01" max="2100-12-31" value={settings.date} onChange={e => update('date', e.target.value)} /></Field></FieldGroup>
             </FieldGroup>
           </section>
           <section className="editor-section" aria-labelledby="times-heading">
@@ -164,9 +166,9 @@ export default function App() {
                   {row.enabled && <FieldGroup className="prayer-controls">
                     {item.id !== 'sunrise' && <FieldGroup className="two-fields">
                       {item.id !== 'jumuah' && <Choice id={`mode-${item.id}`} label="Iqamah setting" value={row.iqamahMode} onChange={value => prayer(item.id, { iqamahMode: value })} options={[{ value: 'fixed', label: 'Fixed time' }, { value: 'after', label: 'After adhan' }]} />}
-                      {row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`}>Iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} /></Field> : <NumberField id={`delay-${item.id}`} label="Minutes after adhan" min={0} max={180} value={row.delay} onChange={value => prayer(item.id, { delay: value })} />}
+                      {row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`}>Iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} /></Field> : <NumberField id={`delay-${item.id}`} label="Minutes after adhan" min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} />}
                     </FieldGroup>}
-                    {item.id !== 'jumuah' && <Accordion type="single" collapsible><AccordionItem value="adjustment"><AccordionTrigger className="adjust-trigger">Adjust calculated {item.id === 'sunrise' ? 'sunrise' : 'adhan'}{row.adjustment !== 0 ? ` (${row.adjustment > 0 ? '+' : ''}${row.adjustment} min)` : ''}</AccordionTrigger><AccordionContent><NumberField id={`adjust-${item.id}`} label="Minute adjustment (+ or −)" min={-60} max={60} value={row.adjustment} onChange={value => prayer(item.id, { adjustment: value })} /></AccordionContent></AccordionItem></Accordion>}
+                    {item.id !== 'jumuah' && <Accordion type="single" collapsible><AccordionItem value="adjustment"><AccordionTrigger className="adjust-trigger">Adjust calculated {item.id === 'sunrise' ? 'sunrise' : 'adhan'}{row.adjustment !== 0 ? ` (${row.adjustment > 0 ? '+' : ''}${row.adjustment} min)` : ''}</AccordionTrigger><AccordionContent><NumberField id={`adjust-${item.id}`} label="Minute adjustment (+ or −)" min={-120} max={120} value={row.adjustment} onChange={value => prayer(item.id, { adjustment: value })} /></AccordionContent></AccordionItem></Accordion>}
                   </FieldGroup>}
                 </div>
               })}

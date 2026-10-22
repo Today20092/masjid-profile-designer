@@ -135,7 +135,7 @@ export function getDisplayRows(settings: Settings): DisplayRow[] {
     rows.push({ id: prayer.id, en: prayer.en, ar: prayer.ar, adhan, iqamah })
   }
   for (const row of s.customRows) {
-    if (row.enabled) rows.push({ id: row.id, en: row.en || row.ar, ar: row.ar || row.en, adhan: formatFixed(row.time), iqamah: formatFixed(row.time) })
+    if (row.enabled) rows.push({ id: row.id, en: row.en, ar: row.ar, adhan: formatFixed(row.time), iqamah: formatFixed(row.time) })
   }
   return rows
 }
