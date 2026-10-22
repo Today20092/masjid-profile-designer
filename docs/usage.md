@@ -18,8 +18,6 @@ Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both colum
 
 Emerald, midnight, and ivory are preset artwork themes. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
 
-Until you confirm the timetable, the artwork has a sample mark. Confirmation means you checked the schedule; it does not contact the masjid or verify times automatically.
-
 Download creates a square 1080px PNG with all essential content inside a circle. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
 
 ## Saved settings and privacy

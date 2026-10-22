@@ -5,6 +5,7 @@ const settings = createDefaults()
 settings.date = '2026-10-21'
 settings.use24Hour = true
 assert.equal(validateSettings(JSON.parse(JSON.stringify(settings))).name, 'Masjid Abu Bakr')
+assert.equal(validateSettings({ ...settings, confirmed: false }).name, settings.name)
 assert.equal(getDisplayRows(settings).find(row => row.id === 'dhuhr')?.iqamah, '13:45')
 assert.throws(() => validateSettings({ ...settings, date: '2026-02-30' }), /date/i)
 

@@ -154,9 +154,6 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     })
   })
 
-  if (!settings.confirmed) {
-    text(ctx, arabicOnly ? 'نموذج • يرجى تأكيد الأوقات' : 'SAMPLE · CONFIRM PRAYER TIMES', 540, 870, 560, arabicOnly ? 27 : 21, theme.gold, arabicOnly, 700)
-  }
   const date = new Date(`${settings.date}T12:00:00Z`)
   const dateLabel = new Intl.DateTimeFormat(arabicOnly ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date)
   text(ctx, dateLabel, 540, 914, 490, 25, theme.muted, arabicOnly)
@@ -181,7 +178,7 @@ export function ProfileArtwork({ settings, rows, className }: { settings: Settin
   return <>
     <canvas ref={canvasRef} width={SIZE} height={SIZE} className={className} aria-label="Prayer timetable preview" aria-describedby={descriptionId} role="img" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '50%' }} />
     <p id={descriptionId} className="sr-only">
-      {settings.name} {settings.nameAr}. {settings.date}. {!settings.confirmed && 'Sample schedule. Confirm prayer times before sharing.'}
+      {settings.name} {settings.nameAr}. {settings.date}.
       {rows.map(row => {
         const label = settings.language === 'ar' ? row.ar || row.en : settings.language === 'en' ? row.en || row.ar : [row.en, row.ar].filter(Boolean).join(' ')
         const iqamah = row.relativeMinutes === undefined ? row.iqamah : relativeWording(row.relativeMinutes, settings.language).map(line => line.value).join(' ')

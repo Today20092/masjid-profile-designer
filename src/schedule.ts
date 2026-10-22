@@ -80,7 +80,7 @@ export function validateSettings(value: unknown): Settings {
     date, language: choice(s.language, ['en', 'ar', 'both'], 'language'),
     theme: choice(s.theme, ['emerald', 'midnight', 'ivory'], 'theme'),
     timeDisplay: choice(s.timeDisplay, ['iqamah', 'adhan', 'both'], 'time columns'),
-    use24Hour: boolean(s.use24Hour, '24-hour format'), confirmed: boolean(s.confirmed, 'Schedule confirmation'),
+    use24Hour: boolean(s.use24Hour, '24-hour format'),
     footer: text(s.footer, 'Footer', 100), prayers, customRows,
   }
 }
@@ -93,7 +93,7 @@ export function createDefaults(): Settings {
     version: 1, name: 'Masjid Abu Bakr', nameAr: 'مسجد أبو بكر', location: '11010 N 30th St, Tampa, FL',
     latitude: 28.048619, longitude: -82.426613, timezone: 'America/New_York', method: 'NorthAmerica', madhab: 'standard',
     date: `${part('year')}-${part('month')}-${part('day')}`, language: 'both', theme: 'emerald', timeDisplay: 'iqamah',
-    use24Hour: false, confirmed: false, footer: '', customRows: [],
+    use24Hour: false, footer: '', customRows: [],
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
       fixed: fixed[i], delay: prayer.id === 'maghrib' ? 7 : 15, adjustment: 0,

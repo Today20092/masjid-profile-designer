@@ -10,7 +10,7 @@ Maintain a masjid schedule, preview it inside a circle, download a 1080 by 1080 
 
 - Default Masjid Abu Bakr / مسجد أبو بكر in Tampa, 11010 N 30th St, with approximate coordinates 28.048619, -82.426613 and America/New_York timezone. Coordinates are from the address-matched public listing, not a survey.
 - Use adhan's NorthAmerica method and standard Asr as editable starting settings, never claim the masjid approved them.
-- The reference image's fixed iqamah values are editable sample values, not certified current times. Mark unconfirmed exports as sample until the maintainer confirms the schedule.
+- The reference image's fixed iqamah values are editable starting values, not certified current times. The user requested clean images by default with no sample label or confirmation step.
 - Automatic adhan for chosen location, date, timezone, method, Asr convention, and per-prayer minute adjustments.
 - Each iqamah can be a fixed clock time or delay after adjusted adhan. Maghrib defaults to seven minutes after calculated sunset. Jumu‘ah is a manually specified fixed time; sunrise has no iqamah.
 - Delayed iqamah can display its rule, such as “7 minutes after adhan,” instead of a date-specific clock time. New designs use this for Maghrib; existing saved designs keep their previous appearance until enabled. Relative wording supports Arabic, English, and bilingual artwork.

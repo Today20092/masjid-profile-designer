@@ -108,8 +108,6 @@
 .download-button { display: none; width: 100%; min-height: 52px; }
 .download-area p { margin: 11px 0 0; color: var(--muted-foreground); font-size: 10px; line-height: 1.6; }
 .how-to { font-size: 11px; line-height: 1.8; color: var(--muted-foreground); text-align: center; max-width: 350px; margin: 20px auto 0; }
-.sample-note { display: flex; align-items: flex-start; gap: 7px; color: var(--muted-foreground); font-size: 11px; line-height: 1.7; margin: 20px 0 0; padding: 13px 15px; border: 1px solid var(--border); border-radius: 10px; }
-.sample-note svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; }
 .editor-column { display: flex; flex-direction: column; gap: 16px; }
 .editor-section { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 22px 18px; }
 .editor-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 25px; }
@@ -151,10 +149,6 @@
   .editor-section { padding-inline: 14px; }
 }
 .add-row { margin-top: 14px; width: 100%; }
-.confirm-field { align-items: flex-start; gap: 12px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
-.confirm-field > [data-slot="checkbox"] { margin-top: 10px; }
-.confirm-field [data-slot="field-label"] { min-height: 35px; line-height: 1.7; }
-.confirm-field > div { flex: 1; }
 .theme-options { width: 100%; gap: 10px; align-items: stretch; }
 .theme-option { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; height: auto; border: 1px solid var(--border); border-radius: 10px; padding: 10px 7px 12px; font-size: 10px; }
 .theme-option[data-state="on"] { border-color: var(--primary); background: var(--accent); }

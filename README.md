@@ -18,7 +18,7 @@ Create a readable prayer timetable for your masjid's WhatsApp group photo. Enter
 2. Set the masjid name, date, location, and calculation settings.
 3. Enter the masjid's iqamah times. Use fixed times or a delay after adhan.
 4. Choose the rows, language, and theme. Check the circular preview.
-5. Confirm the schedule, download the PNG, and set it as the WhatsApp group photo.
+5. Download the PNG and set it as the WhatsApp group photo.
 
 The starting masjid is Masjid Abu Bakr in Tampa, Florida. Its editable example iqamah times come from a reference photo and are not a verified current schedule. Confirm the values before publishing. Automatic calculations supply adhan times; the masjid determines iqamah times.
 

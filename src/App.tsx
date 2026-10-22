@@ -50,7 +50,6 @@ const methods: { value: Settings['method']; label: string }[] = [
   { value: 'Egyptian', label: 'Egyptian General Authority' }, { value: 'UmmAlQura', label: 'Umm al-Qura' },
   { value: 'Karachi', label: 'University of Karachi' }, { value: 'MoonsightingCommittee', label: 'Moonsighting Committee' },
 ]
-const scheduleKeys: (keyof Settings)[] = ['name', 'nameAr', 'location', 'date', 'latitude', 'longitude', 'timezone', 'method', 'madhab', 'customRows']
 
 export default function App() {
   const [initial] = useState(restore)
@@ -80,11 +79,11 @@ export default function App() {
 
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSaved(false); setDownloaded(false); setExportError('')
-    setSettings(current => ({ ...current, [key]: value, confirmed: scheduleKeys.includes(key) ? false : key === 'confirmed' ? value as boolean : current.confirmed }))
+    setSettings(current => ({ ...current, [key]: value }))
   }
   function prayer(id: PrayerId, patch: Partial<PrayerSetting>) {
     setSaved(false); setDownloaded(false)
-    setSettings(current => ({ ...current, confirmed: false, prayers: { ...current.prayers, [id]: { ...current.prayers[id], ...patch } } }))
+    setSettings(current => ({ ...current, prayers: { ...current.prayers, [id]: { ...current.prayers[id], ...patch } } }))
   }
   function custom(id: string, patch: Partial<CustomRow>) {
     update('customRows', settings.customRows.map(row => row.id === id ? { ...row, ...patch } : row))
@@ -107,7 +106,7 @@ export default function App() {
       setSaved(false)
       setDownloaded(false)
       setExportError('')
-      setSettings(current => ({ ...current, latitude: Number(position.coords.latitude.toFixed(6)), longitude: Number(position.coords.longitude.toFixed(6)), timezone, confirmed: false }))
+      setSettings(current => ({ ...current, latitude: Number(position.coords.latitude.toFixed(6)), longitude: Number(position.coords.longitude.toFixed(6)), timezone }))
       setLocating(false)
       setLocationNotice(`Coordinates updated. Timezone is ${timezone}, from your device. Check that it matches the masjid, and update the location label.`)
     }, () => { setLocating(false); setLocationError('Location could not be accessed. Allow location in your browser or enter coordinates below.') }, { timeout: 15000, maximumAge: 300000 })
@@ -138,7 +137,6 @@ export default function App() {
           </div><Separator />
           <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}><ArrowDownToLine data-icon="inline-start" />{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
-          {!settings.confirmed && <p className="sample-note"><CircleHelp aria-hidden="true" />Starting iqamah times are samples. Check your timetable below before sharing.</p>}
         </div></section>
         <section className="editor-column" aria-label="Customize your timetable">
           {(storageNotice || result.error || exportError) && <div className="notices">
@@ -183,7 +181,6 @@ export default function App() {
               </div>)}
             </FieldSet>
             <Button variant="outline" className="add-row" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={() => update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: 'Additional prayer', ar: 'صلاة إضافية', time: '13:30', enabled: true }])}><Plus data-icon="inline-start" />Add a custom row</Button>
-            <Field orientation="horizontal" className="confirm-field"><Checkbox id="confirmed" checked={settings.confirmed} onCheckedChange={checked => update('confirmed', checked === true)} /><div><FieldLabel htmlFor="confirmed">I’ve checked these times for my masjid.</FieldLabel><FieldDescription>This removes the sample label from your image.</FieldDescription></div></Field>
           </section>
           <section className="editor-section" aria-labelledby="appearance-heading">
             <div className="editor-heading"><span className="step-number">03</span><div><h2 id="appearance-heading">Make it feel like home</h2><p>Thoughtful themes. Beautiful in every language.</p></div></div>
