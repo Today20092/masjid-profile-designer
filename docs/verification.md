@@ -41,3 +41,7 @@ The checks used an emulated phone viewport, not a physical phone or a screen-rea
 ## Clean exports by default
 
 The user requested removing the sample label. The watermark, sample notice, confirmation checkbox, and confirmation state are removed. Existing saved settings remain compatible; their old confirmation field is ignored.
+
+## Prayer text size presets
+
+Standard, Large, and Extra large are saved with the design and applied to both previews and exports. Browser checks measured the default clock text at 45px, 53.1px, and 60.75px respectively. They also covered saved-state restoration, PNG download, eight rows, Arabic, two time columns, and measured text bounds inside the circular crop. Older saved designs default to Standard.

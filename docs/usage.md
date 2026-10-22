@@ -16,6 +16,8 @@ Prayer rows show the name and iqamah value together. Tap the arrow beside a pray
 
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 
+Choose **Standard**, **Large**, or **Extra large** under **Prayer text size** to increase prayer names and times. The layout adds row spacing and fits longer labels within the circle. Your choice is saved in this browser and used for PNG exports.
+
 Emerald, midnight, and ivory are preset artwork themes. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
 
 Download creates a square 1080px PNG with all essential content inside a circle. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.

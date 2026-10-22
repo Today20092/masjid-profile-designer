@@ -6,6 +6,11 @@ settings.date = '2026-10-21'
 settings.use24Hour = true
 assert.equal(validateSettings(JSON.parse(JSON.stringify(settings))).name, 'Masjid Abu Bakr')
 assert.equal(validateSettings({ ...settings, confirmed: false }).name, settings.name)
+const withoutTextSize = JSON.parse(JSON.stringify(settings))
+delete withoutTextSize.textSize
+assert.equal(validateSettings(withoutTextSize).textSize, 'standard')
+assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'extra')
+assert.throws(() => validateSettings({ ...settings, textSize: 'huge' }), /text size/)
 assert.equal(getDisplayRows(settings).find(row => row.id === 'dhuhr')?.iqamah, '13:45')
 assert.throws(() => validateSettings({ ...settings, date: '2026-02-30' }), /date/i)
 

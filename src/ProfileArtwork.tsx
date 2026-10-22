@@ -119,8 +119,10 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   ctx.globalAlpha = 1
 
   const bothColumns = settings.timeDisplay === 'both'
+  const scale = settings.textSize === 'extra' ? 1.35 : settings.textSize === 'large' ? 1.18 : 1
   const labelX = bothColumns ? 326 : 350
-  const timeX = bothColumns ? [598, 775] : [716]
+  const timeX = bothColumns ? (scale > 1 ? [570, 790] : [598, 775]) : [716]
+  const timeWidth = bothColumns ? (scale > 1 ? 190 : 162) : 265
   const headingY = 332
   const headings = bothColumns
     ? (arabicOnly ? ['الأذان', 'الإقامة'] : ['ADHAN', 'IQAMAH'])
@@ -128,7 +130,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   headings.forEach((heading, index) => text(ctx, heading, timeX[index], headingY, bothColumns ? 165 : 260, arabicOnly ? 28 : 20, theme.gold, arabicOnly, 700))
   text(ctx, arabicOnly ? 'الصلاة' : 'PRAYER', labelX, headingY, 220, arabicOnly ? 28 : 20, theme.gold, arabicOnly, 700)
 
-  const gap = Math.min(79, 462 / Math.max(rows.length, 1))
+  const gap = scale > 1 ? Math.min(79 * scale, 514 / Math.max(rows.length, 1)) : Math.min(79, 462 / Math.max(rows.length, 1))
   const firstY = 379 + (8 - Math.max(rows.length, 6)) * 5
   rows.forEach((row, index) => {
     const y = firstY + index * gap
@@ -143,14 +145,15 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
-    text(ctx, primaryLabel, labelX, secondaryLabel ? y - 13 : y, bothColumns ? 200 : 246, bilingual ? 29 : 38, theme.ink, primaryArabic, 700)
-    if (secondaryLabel) text(ctx, row.ar, labelX, y + 18, bothColumns ? 200 : 246, 28, theme.muted, true)
+    const labelSize = Math.min((bilingual ? 29 : 38) * scale, gap * (secondaryLabel ? 0.47 : 0.7))
+    text(ctx, primaryLabel, labelX, secondaryLabel ? y - 13 * scale : y, bothColumns ? 200 : 246, labelSize, theme.ink, primaryArabic, 700)
+    if (secondaryLabel) text(ctx, row.ar, labelX, y + 18 * scale, bothColumns ? 200 : 246, Math.min(28 * scale, gap * 0.47), theme.muted, true)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => {
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
       if (relative) {
-        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, timeX[column], y + (index === 0 ? -12 : 17), bothColumns ? 162 : 265, bilingual ? 28 : index === 0 ? 36 : 25, index === 0 ? theme.gold : theme.muted, line.arabic, index === 0 ? 700 : 500))
-      } else text(ctx, value || '—', timeX[column], y, bothColumns ? 162 : 265, bothColumns ? 35 : 45, column === values.length - 1 ? theme.gold : theme.ink, false, 700)
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, timeX[column], y + (index === 0 ? -12 : 17) * Math.min(scale, gap / 64), timeWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale, gap * 0.47), index === 0 ? theme.gold : theme.muted, line.arabic, index === 0 ? 700 : 500))
+      } else text(ctx, value || '—', timeX[column], y, timeWidth, Math.min((bothColumns ? 35 : 45) * scale, gap * 0.82), column === values.length - 1 ? theme.gold : theme.ink, false, 700)
     })
   })
 

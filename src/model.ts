@@ -19,6 +19,7 @@ export type Settings = {
   method: 'NorthAmerica' | 'MuslimWorldLeague' | 'Egyptian' | 'UmmAlQura' | 'Karachi' | 'MoonsightingCommittee';
   madhab: 'standard' | 'hanafi'; date: string; language: Language;
   theme: ThemeId; timeDisplay: TimeDisplay; use24Hour: boolean;
+  textSize: 'standard' | 'large' | 'extra';
   footer: string;
   prayers: Record<PrayerId, PrayerSetting>; customRows: CustomRow[];
 }
