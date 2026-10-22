@@ -2,15 +2,15 @@
 
 ## Commands
 
-Use Node.js 24 or later and npm. Commit `package-lock.json` with dependency changes.
+Use Node.js 24 or later and pnpm 12.14.0, pinned in `package.json`. Commit `pnpm-lock.yaml` with dependency changes. If pnpm is not installed, follow its [installation guide](https://pnpm.io/installation).
 
 ```sh
-npm ci
-npm run dev
-npm run check
-npm run check:schedule
-npm run build
-npm run preview
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm check
+pnpm check:schedule
+pnpm build
+pnpm preview
 ```
 
 `check:schedule` runs a small assertion-based behavior check. It is not a comprehensive test suite. Check a phone-width browser, Arabic rendering, keyboard focus, saved state, and PNG export after changes to the editor or renderer.

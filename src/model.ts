@@ -11,7 +11,7 @@ export type PrayerId = typeof PRAYERS[number]['id']
 export type ThemeId = 'emerald' | 'midnight' | 'ivory'
 export type Language = 'en' | 'ar' | 'both'
 export type TimeDisplay = 'iqamah' | 'adhan' | 'both'
-export type PrayerSetting = { enabled: boolean; iqamahMode: 'fixed' | 'after'; fixed: string; delay: number; adjustment: number }
+export type PrayerSetting = { enabled: boolean; iqamahMode: 'fixed' | 'after'; fixed: string; delay: number; adjustment: number; showRelative: boolean }
 export type CustomRow = { id: string; en: string; ar: string; time: string; enabled: boolean }
 export type Settings = {
   version: 1; name: string; nameAr: string; location: string;
@@ -22,5 +22,5 @@ export type Settings = {
   confirmed: boolean; footer: string;
   prayers: Record<PrayerId, PrayerSetting>; customRows: CustomRow[];
 }
-export type DisplayRow = { id: string; en: string; ar: string; adhan: string; iqamah: string }
+export type DisplayRow = { id: string; en: string; ar: string; adhan: string; iqamah: string; relativeMinutes?: number }
 export const MAX_ROWS = 8

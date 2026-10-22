@@ -22,12 +22,12 @@ function restore() {
   }
 }
 
-function NumberField({ id, label, value, onChange, min, max, step = 1 }: {
-  id: string; label: string; value: number; onChange: (value: number) => void; min: number; max: number; step?: number | 'any'
+function NumberField({ id, label, value, onChange, min, max, step = 1, compact = false }: {
+  id: string; label: string; value: number; onChange: (value: number) => void; min: number; max: number; step?: number | 'any'; compact?: boolean
 }) {
   const invalid = !Number.isFinite(value) || value < min || value > max || (step !== 'any' && !Number.isInteger(value))
   return <Field data-invalid={invalid}>
-    <FieldLabel htmlFor={id}>{label}</FieldLabel>
+    <FieldLabel htmlFor={id} className={compact ? 'sr-only' : undefined}>{label}</FieldLabel>
     <Input id={id} type="number" inputMode={step === 'any' ? 'decimal' : 'numeric'} value={Number.isFinite(value) ? value : ''}
       min={min} max={max} step={step} aria-invalid={invalid} onChange={e => onChange(e.target.value === '' ? NaN : e.target.valueAsNumber)} />
     {invalid && <FieldError>Enter a number from {min} to {max}.</FieldError>}
@@ -156,21 +156,26 @@ export default function App() {
           </section>
           <section className="editor-section" aria-labelledby="times-heading">
             <div className="editor-heading"><span className="step-number">02</span><div><h2 id="times-heading">Prayer times</h2><p>Your iqamah. Your community’s rhythm.</p></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
-            <p className="section-description">Adhan is calculated. Set each iqamah to a clock time or minutes after adhan. Choose the rows to include.</p>
+            <p className="section-description">Edit iqamah times below. Open a prayer’s options for delays and adhan adjustments.</p>
             <FieldSet className="prayer-rows"><FieldLegend className="sr-only">Prayers to display</FieldLegend>
               {PRAYERS.map(item => {
                 const row = settings.prayers[item.id]
                 const calculated = result.rows.find(display => display.id === item.id)
-                return <div className="prayer-editor" key={item.id} data-enabled={row.enabled}>
-                  <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${item.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => prayer(item.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${item.id}`}><span>{item.en}</span><span lang="ar" dir="rtl" className="prayer-arabic">{item.ar}</span></FieldLabel>{row.enabled && calculated?.adhan && <span className="adhan-value">Adhan {calculated.adhan}</span>}</Field>
-                  {row.enabled && <FieldGroup className="prayer-controls">
-                    {item.id !== 'sunrise' && <FieldGroup className="two-fields">
-                      {item.id !== 'jumuah' && <Choice id={`mode-${item.id}`} label="Iqamah setting" value={row.iqamahMode} onChange={value => prayer(item.id, { iqamahMode: value })} options={[{ value: 'fixed', label: 'Fixed time' }, { value: 'after', label: 'After adhan' }]} />}
-                      {row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`}>Iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} /></Field> : <NumberField id={`delay-${item.id}`} label="Minutes after adhan" min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} />}
-                    </FieldGroup>}
-                    {item.id !== 'jumuah' && <Accordion type="single" collapsible><AccordionItem value="adjustment"><AccordionTrigger className="adjust-trigger">Adjust calculated {item.id === 'sunrise' ? 'sunrise' : 'adhan'}{row.adjustment !== 0 ? ` (${row.adjustment > 0 ? '+' : ''}${row.adjustment} min)` : ''}</AccordionTrigger><AccordionContent><NumberField id={`adjust-${item.id}`} label="Minute adjustment (+ or −)" min={-120} max={120} value={row.adjustment} onChange={value => prayer(item.id, { adjustment: value })} /></AccordionContent></AccordionItem></Accordion>}
-                  </FieldGroup>}
-                </div>
+                return <Accordion type="single" collapsible className="prayer-editor" key={item.id} data-enabled={row.enabled}><AccordionItem value="options" className="border-0">
+                  <div className="prayer-main">
+                    <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${item.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => prayer(item.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${item.id}`}><span className="prayer-name">{item.en}<span lang="ar" dir="rtl" className="prayer-arabic">{item.ar}</span></span></FieldLabel></Field>
+                    {row.enabled && <div className="compact-value">
+                      {item.id === 'sunrise' ? <output aria-label="Calculated sunrise">{calculated?.adhan || '—'}</output> : row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`} className="sr-only">{item.en} iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} /></Field> : <><NumberField id={`delay-${item.id}`} label={`${item.en} minutes after adhan`} compact min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} /><span className="delay-unit">min after adhan</span></>}
+                    </div>}
+                    {row.enabled && item.id !== 'jumuah' && <AccordionTrigger className="prayer-options" aria-label={`${item.en} options`} title={`${item.en} options`}><span className="sr-only">{item.en} options</span></AccordionTrigger>}
+                  </div>
+                  {row.enabled && item.id !== 'jumuah' && <AccordionContent><FieldGroup className="prayer-details">
+                    {calculated?.adhan && <p className="calculated-note">Calculated {item.id === 'sunrise' ? 'sunrise' : 'adhan'}: {calculated.adhan}</p>}
+                    {item.id !== 'sunrise' && <Choice id={`mode-${item.id}`} label="Iqamah setting" value={row.iqamahMode} onChange={value => prayer(item.id, { iqamahMode: value })} options={[{ value: 'fixed', label: 'Fixed time' }, { value: 'after', label: 'After adhan' }]} />}
+                    {row.iqamahMode === 'after' && item.id !== 'sunrise' && <Field orientation="horizontal" className="relative-field"><Checkbox id={`relative-${item.id}`} checked={row.showRelative} onCheckedChange={checked => prayer(item.id, { showRelative: checked === true })} /><FieldLabel htmlFor={`relative-${item.id}`}>Show “{row.delay} {row.delay === 1 ? 'minute' : 'minutes'} after adhan” on image</FieldLabel></Field>}
+                    <NumberField id={`adjust-${item.id}`} label="Adhan minute adjustment (+ or −)" min={-120} max={120} value={row.adjustment} onChange={value => prayer(item.id, { adjustment: value })} />
+                  </FieldGroup></AccordionContent>}
+                </AccordionItem></Accordion>
               })}
               {settings.customRows.map(row => <div className="prayer-editor custom-prayer" key={row.id}>
                 <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${row.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => custom(row.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${row.id}`}>{row.en || 'Custom row'}</FieldLabel><Button variant="ghost" size="icon" aria-label={`Remove ${row.en || 'custom row'}`} onClick={() => update('customRows', settings.customRows.filter(item => item.id !== row.id))}><Trash2 /></Button></Field>

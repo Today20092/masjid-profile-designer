@@ -51,6 +51,13 @@ function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, a
   return words.length > 1 ? [words.slice(0, split).join(' '), words.slice(split).join(' ')] : [value]
 }
 
+function relativeWording(minutes: number, language: Settings['language']) {
+  const english = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+  const arabic = minutes === 1 ? 'دقيقة واحدة' : minutes === 2 ? 'دقيقتان' : `${minutes} ${minutes >= 3 && minutes <= 10 ? 'دقائق' : 'دقيقة'}`
+  if (language === 'both') return [{ value: `${english} after adhan`, arabic: false }, { value: `${arabic} بعد الأذان`, arabic: true }]
+  return language === 'ar' ? [{ value: arabic, arabic: true }, { value: 'بعد الأذان', arabic: true }] : [{ value: english, arabic: false }, { value: 'after adhan', arabic: false }]
+}
+
 function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[]) {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Your browser could not create the profile image. Please try another browser.')
@@ -139,7 +146,12 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     text(ctx, primaryLabel, labelX, secondaryLabel ? y - 13 : y, bothColumns ? 200 : 246, bilingual ? 29 : 38, theme.ink, primaryArabic, 700)
     if (secondaryLabel) text(ctx, row.ar, labelX, y + 18, bothColumns ? 200 : 246, 28, theme.muted, true)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
-    values.forEach((value, column) => text(ctx, value || '—', timeX[column], y, bothColumns ? 162 : 265, bothColumns ? 35 : 45, column === values.length - 1 ? theme.gold : theme.ink, false, 700))
+    values.forEach((value, column) => {
+      const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
+      if (relative) {
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, timeX[column], y + (index === 0 ? -12 : 17), bothColumns ? 162 : 265, bilingual ? 28 : index === 0 ? 36 : 25, index === 0 ? theme.gold : theme.muted, line.arabic, index === 0 ? 700 : 500))
+      } else text(ctx, value || '—', timeX[column], y, bothColumns ? 162 : 265, bothColumns ? 35 : 45, column === values.length - 1 ? theme.gold : theme.ink, false, 700)
+    })
   })
 
   if (!settings.confirmed) {
@@ -172,7 +184,8 @@ export function ProfileArtwork({ settings, rows, className }: { settings: Settin
       {settings.name} {settings.nameAr}. {settings.date}. {!settings.confirmed && 'Sample schedule. Confirm prayer times before sharing.'}
       {rows.map(row => {
         const label = settings.language === 'ar' ? row.ar || row.en : settings.language === 'en' ? row.en || row.ar : [row.en, row.ar].filter(Boolean).join(' ')
-        const times = settings.timeDisplay === 'both' ? `Adhan ${row.adhan}; Iqamah ${row.iqamah}` : settings.timeDisplay === 'adhan' ? `Adhan ${row.adhan}` : `Iqamah ${row.iqamah}`
+        const iqamah = row.relativeMinutes === undefined ? row.iqamah : relativeWording(row.relativeMinutes, settings.language).map(line => line.value).join(' ')
+        const times = settings.timeDisplay === 'both' ? `Adhan ${row.adhan}; Iqamah ${iqamah}` : settings.timeDisplay === 'adhan' ? `Adhan ${row.adhan}` : `Iqamah ${iqamah}`
         return `${label}: ${times}.`
       }).join(' ')}
     </p>

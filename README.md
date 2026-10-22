@@ -26,7 +26,7 @@ The starting masjid is Masjid Abu Bakr in Tampa, Florida. Its editable example i
 
 - Phone-first editor with a live circular preview.
 - Automatic adhan calculations with per-prayer adjustments, multiple calculation methods, and standard or Hanafi Asr.
-- Fixed or delayed iqamah, Jumu‘ah, optional sunrise, and custom rows.
+- Fixed or delayed iqamah, with optional “minutes after adhan” wording for monthly photos, plus Jumu‘ah, optional sunrise, and custom rows.
 - English, Arabic, and bilingual artwork in three themes.
 - A 1080 × 1080 PNG that matches the preview.
 - Settings saved in the same browser, with no account or timetable upload.
@@ -35,11 +35,11 @@ The downloaded image is static. When the schedule changes, generate a new photo 
 
 ## Run locally
 
-Use Node.js 24 or later.
+Use Node.js 24 or later and pnpm 12.14.0.
 
 ```sh
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 Built with React, Vite, Tailwind CSS, shadcn/ui, and [Adhan JS](https://github.com/batoulapps/adhan-js). Development assisted by OpenAI Codex. See the [implementation specification](docs/spec.md) and [planning map](planning/map.md) for the project decisions.

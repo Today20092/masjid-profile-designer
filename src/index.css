@@ -129,7 +129,27 @@
 .prayer-controls { padding: 0 0 14px 30px; gap: 5px; }
 .prayer-controls [data-slot="field-label"] { font-size: 10px; }
 .prayer-controls [data-slot="input"], .prayer-controls [data-slot="select-trigger"] { padding-inline: 9px; }
-.adjust-trigger { font-size: 10px; color: var(--muted-foreground); font-weight: 500; }
+.prayer-main { display: grid; grid-template-columns: minmax(0, 1fr) 124px 44px; gap: 6px; align-items: center; min-height: 66px; }
+.prayer-main .prayer-heading { min-width: 0; gap: 7px; }
+.prayer-main .prayer-heading > [data-slot="field-label"] { min-width: 0; gap: 0; }
+.prayer-name { display: flex; flex-direction: column; gap: 0; line-height: 1.3; }
+.prayer-main .prayer-arabic { font-size: 14px; line-height: 1.35; }
+.compact-value { min-width: 0; }
+.compact-value [data-slot="input"] { padding-inline: 7px; }
+.compact-value output { font-size: 13px; }
+.delay-unit { display: block; margin-top: 2px; color: var(--muted-foreground); font-size: 10px; text-align: center; }
+.prayer-options { justify-content: center; padding-inline: 7px; min-height: 44px; }
+.prayer-details { padding: 8px 0 16px 27px; gap: 14px; }
+.calculated-note { margin: 0; color: var(--muted-foreground); font-size: 12px; }
+.relative-field { align-items: center; gap: 8px; }
+.relative-field [data-slot="field-label"] { min-height: 44px; line-height: 1.5; }
+@media (max-width: 380px) {
+  .editor-section { padding-inline: 16px; }
+  .prayer-main { gap: 4px; }
+}
+@media (max-width: 340px) {
+  .editor-section { padding-inline: 14px; }
+}
 .add-row { margin-top: 14px; width: 100%; }
 .confirm-field { align-items: flex-start; gap: 12px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
 .confirm-field > [data-slot="checkbox"] { margin-top: 10px; }

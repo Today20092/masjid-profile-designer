@@ -6,9 +6,13 @@ Set the location coordinates, IANA timezone, calculation method, and Asr convent
 
 Adhan adjustments change the calculated start time by a number of minutes. A delayed iqamah follows that adjusted time. A fixed iqamah remains at the clock time you enter when you change the date. Jumu‘ah is entered separately. Sunrise is a calculated event and has no iqamah.
 
+For a delayed iqamah, enable **Show “7 minutes after adhan” on image** to publish the delay instead of that day's clock time. The wording follows your entered number of minutes and the artwork language. New designs enable this for Maghrib by default. Existing saved designs keep their current appearance until you enable it. This is useful when keeping the same group photo for a month; any displayed adhan clock times still apply only to the selected date.
+
 The image represents the selected date. It does not update itself after downloading. If your masjid publishes a weekly or seasonal schedule, use the footer to explain its applicability and review date-dependent times before each export.
 
 ## Design and export
+
+Prayer rows show the name and iqamah value together. Tap the arrow beside a prayer to open its options: fixed/delayed mode, relative wording, and adhan adjustment. The main time or delay remains directly editable without opening options.
 
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 

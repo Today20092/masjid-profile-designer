@@ -13,6 +13,7 @@ Maintain a masjid schedule, preview it inside a circle, download a 1080 by 1080 
 - The reference image's fixed iqamah values are editable sample values, not certified current times. Mark unconfirmed exports as sample until the maintainer confirms the schedule.
 - Automatic adhan for chosen location, date, timezone, method, Asr convention, and per-prayer minute adjustments.
 - Each iqamah can be a fixed clock time or delay after adjusted adhan. Maghrib defaults to seven minutes after calculated sunset. Jumu‘ah is a manually specified fixed time; sunrise has no iqamah.
+- Delayed iqamah can display its rule, such as “7 minutes after adhan,” instead of a date-specific clock time. New designs use this for Maghrib; existing saved designs keep their previous appearance until enabled. Relative wording supports Arabic, English, and bilingual artwork.
 - Date changes recalculate adhan and delayed iqamah, preserving fixed iqamah.
 - Include/exclude any built-in row and add a custom labelled fixed-time row. At most eight enabled rows to protect legibility.
 - English, Arabic, bilingual, 12-hour and 24-hour display, adhan/iqamah/both columns.
@@ -24,6 +25,7 @@ Maintain a masjid schedule, preview it inside a circle, download a 1080 by 1080 
 - React, Vite, TypeScript, Tailwind CSS, selected shadcn/ui controls.
 - Design for 360px wide phones first, with no horizontal page overflow, labelled fields, readable Arabic, touch targets about 44px, keyboard focus, and accessible error messages.
 - Preview first, short grouped editor sections underneath on phones. On larger screens, show editor and preview side by side. Keep download accessible while editing without covering fields or the on-screen keyboard.
+- Keep prayer rows compact with the name and editable iqamah value on one row. Expand per-prayer options for fixed/delayed mode, relative wording, and adhan adjustments.
 - Three polished preset artwork themes: emerald, midnight, ivory. Future customization uses theme tokens separated from schedule data; do not build arbitrary color/font/logo controls now.
 - Circular boundary with generous inset, readable rows and names, optional footer, and a small circular WhatsApp-size preview. The PNG and main preview use the same drawing implementation and locally bundled fonts.
 - Canvas export with Arabic shaping, fixed 1080px dimensions independent of device pixel ratio. Show an error if download fails and prevent export when settings are invalid.
@@ -32,7 +34,7 @@ Maintain a masjid schedule, preview it inside a circle, download a 1080 by 1080 
 
 The user asked to keep testing simple rather than negotiate test boundaries. Use focused behavior checks of schedule math, invalid saved settings, and a real mobile browser smoke check including PNG export. No broad test framework or exhaustive UI suite is required.
 
-Create a public GitHub repository, deploy through GitHub Actions to GitHub Pages, verify the live site, and provide concise README setup/use guidance plus linked technical details. Never publish the supplied WhatsApp screenshots or personal conversation attachments.
+Use pnpm, pinned in package.json, with pnpm-lock.yaml and frozen-lockfile installs locally and in CI. Create a public GitHub repository, deploy through GitHub Actions to GitHub Pages, verify the live site, and provide concise README setup/use guidance plus linked technical details. Never publish the supplied WhatsApp screenshots or personal conversation attachments.
 
 ## Shared implementation interfaces
 

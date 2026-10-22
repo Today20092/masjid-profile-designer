@@ -30,3 +30,10 @@ No missing core requirements or unrequested features were reported. Both review 
 ## Limits
 
 The checks used an emulated phone viewport, not a physical phone or a screen-reader session. Browser and operating-system download behavior can differ. The masjid's current iqamah times and preferred calculation settings were not certified; maintainers enter and confirm their own schedule. Exported images are static.
+
+## Relative wording and compact editor update
+
+- Delayed iqamah can display minutes after adhan instead of a clock time. Checks cover changed delays and dates, fixed/clock fallback, old saved settings without the new flag, and invalid flag values.
+- Browser checks cover the relative-wording toggle, save/reload, Arabic and bilingual output, and two time columns. The preview and downloaded PNG use the same wording.
+- At a 360px viewport, the collapsed prayer section is 858px high, down from 1509px. Prayer options expand individually; time inputs stay visible. Layout and export checks passed at 320, 360, 390, 700, and 1440px.
+- pnpm 12.14.0 replaces npm. The imported lockfile preserves dependency versions. Frozen-lockfile installation, schedule checks, production build, and production dependency audit passed.

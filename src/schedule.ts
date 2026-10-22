@@ -55,6 +55,7 @@ export function validateSettings(value: unknown): Settings {
       fixed: clock(p.fixed, `${prayer.en} fixed time`),
       delay: number(p.delay, `${prayer.en} delay`, 0, 240, true),
       adjustment: number(p.adjustment, `${prayer.en} adjustment`, -120, 120, true),
+      showRelative: p.showRelative === undefined ? false : boolean(p.showRelative, `${prayer.en} relative wording`),
     }
   }
   if (!Array.isArray(s.customRows) || s.customRows.length > 20) throw new Error('Use at most 20 custom rows.')
@@ -96,6 +97,7 @@ export function createDefaults(): Settings {
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
       fixed: fixed[i], delay: prayer.id === 'maghrib' ? 7 : 15, adjustment: 0,
+      showRelative: prayer.id === 'maghrib',
     }])) as Settings['prayers'],
   }
 }
@@ -128,11 +130,11 @@ export function getDisplayRows(settings: Settings): DisplayRow[] {
       if (Number.isFinite(time.getTime())) {
         adhan = formatter.format(time)
         if (p.iqamahMode === 'after' && prayer.id !== 'sunrise') iqamah = formatter.format(new Date(time.getTime() + p.delay * 60_000))
-      } else if (s.timeDisplay !== 'iqamah' || p.iqamahMode === 'after') {
+      } else if (s.timeDisplay !== 'iqamah' || (p.iqamahMode === 'after' && !p.showRelative)) {
         throw new Error(`${prayer.en} cannot be calculated for this location and date. Use a fixed iqamah time or another location/date.`)
       }
     }
-    rows.push({ id: prayer.id, en: prayer.en, ar: prayer.ar, adhan, iqamah })
+    rows.push({ id: prayer.id, en: prayer.en, ar: prayer.ar, adhan, iqamah, ...(p.iqamahMode === 'after' && p.showRelative ? { relativeMinutes: p.delay } : {}) })
   }
   for (const row of s.customRows) {
     if (row.enabled) rows.push({ id: row.id, en: row.en, ar: row.ar, adhan: formatFixed(row.time), iqamah: formatFixed(row.time) })

@@ -10,6 +10,21 @@ assert.throws(() => validateSettings({ ...settings, date: '2026-02-30' }), /date
 
 const rows = getDisplayRows(settings)
 const maghrib = rows.find(row => row.id === 'maghrib')!
+assert.equal(maghrib.relativeMinutes, 7)
+const relative = structuredClone(settings)
+relative.prayers.maghrib.delay = 12
+assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativeMinutes, 12)
+relative.date = '2026-11-21'
+assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativeMinutes, 12)
+relative.prayers.maghrib.showRelative = false
+assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativeMinutes, undefined)
+relative.prayers.maghrib.showRelative = true
+relative.prayers.maghrib.iqamahMode = 'fixed'
+assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativeMinutes, undefined)
+const legacy = JSON.parse(JSON.stringify(settings))
+delete legacy.prayers.maghrib.showRelative
+assert.equal(validateSettings(legacy).prayers.maghrib.showRelative, false)
+assert.throws(() => validateSettings({ ...settings, prayers: { ...settings.prayers, maghrib: { ...settings.prayers.maghrib, showRelative: 'yes' } } }), /relative wording/)
 const minutes = (time: string) => {
   const [hour, minute] = time.split(':').map(Number)
   return hour * 60 + minute
