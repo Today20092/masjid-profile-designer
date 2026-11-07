@@ -13,7 +13,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "check": "tsc -b",
     "check:schedule": "tsx scripts/check-schedule.ts",
-    "check:share": "tsx scripts/check-share.ts"
+    "check:share": "tsx scripts/check-share.ts",
+    "check:contrast": "tsx scripts/check-contrast.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
