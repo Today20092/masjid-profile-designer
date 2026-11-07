@@ -157,11 +157,12 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
 
   const gap = scale > 1 ? Math.min(79 * scale, 514 / Math.max(rows.length, 1)) : Math.min(79, 462 / Math.max(rows.length, 1))
   const firstY = 379 + (8 - Math.max(rows.length, 6)) * 5 + (wide ? 4 : 0)
+  // The circle narrows at the top and bottom; size every row to the narrowest safe chord so bands line up.
+  const lastY = firstY + (rows.length - 1) * gap
+  const edgeY = Math.max(Math.abs(firstY - gap / 2 - 540), Math.abs(lastY + gap / 2 - 540))
+  const halfWidth = wide ? Math.min(450, Math.sqrt(500 ** 2 - edgeY ** 2) - 12) : 322
   rows.forEach((row, index) => {
     const y = firstY + index * gap
-    // The circle narrows at the top and bottom, so widen each row only within its safe chord.
-    const edgeY = Math.max(Math.abs(y - gap / 2 - 540), Math.abs(y + gap / 2 - 540))
-    const halfWidth = wide ? Math.min(450, Math.sqrt(500 ** 2 - edgeY ** 2) - 12) : 322
     const widthScale = halfWidth / 322
     const rowLabelX = spread(labelX, widthScale)
     const labelWidth = (bothColumns ? 200 : 246) * widthScale
@@ -177,15 +178,15 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
-    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.43 : 0.7))
-    text(ctx, primaryLabel, rowLabelX, secondaryLabel ? y - (wide ? gap * 0.27 : Math.min(13 * scale, gap * 0.25)) : y, labelWidth, labelSize, theme.ink, primaryArabic, 700)
-    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.31 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost, gap * 0.43), theme.ink, true, 700)
+    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.38 : 0.7))
+    text(ctx, primaryLabel, rowLabelX, secondaryLabel ? y - (wide ? gap * 0.2 : Math.min(13 * scale, gap * 0.25)) : y, labelWidth, labelSize, theme.ink, primaryArabic, 700)
+    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.24 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost, gap * (wide ? 0.36 : 0.43)), theme.ink, true, 700)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => {
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
       const valueX = spread(timeX[column], widthScale)
       if (relative) {
-        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.29 : 0.33) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale * typeBoost, gap * 0.47), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.2 : 0.25) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale * typeBoost, gap * (wide ? 0.36 : 0.47)), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
       } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * scale * typeBoost, gap * (wide ? 0.88 : 0.82)), column === values.length - 1 ? theme.gold : theme.ink)
     })
   })
