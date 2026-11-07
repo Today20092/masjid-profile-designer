@@ -171,15 +171,15 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .add-row { margin-top: 14px; width: 100%; }
 .theme-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 10px; align-items: stretch; }
 .theme-option { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; height: auto; border: 1px solid var(--border); border-radius: 10px; padding: 10px 7px 12px; font-size: 12px; }
-.theme-option[data-state="on"] { border-color: var(--primary); background: var(--accent); }
+.theme-option[data-pressed] { border-color: var(--primary); background: var(--accent); }
 .theme-swatch { width: 100%; height: 62px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .theme-swatch svg { width: 12px; height: 12px; margin-bottom: 3px; }
 .theme-swatch > span { height: 2px; width: 38%; background: currentColor; opacity: .6; border-radius: 2px; }
 .theme-check { display: none; position: absolute; bottom: 10px; right: 6px; width: 11px; height: 11px; }
-.theme-option[data-state="on"] .theme-check { display: block; }
+.theme-option[data-pressed] .theme-check { display: block; }
 .segmented { width: 100%; gap: 5px; }
 .segmented [data-slot="toggle-group-item"] { flex: 1; min-width: 0; padding-inline: 9px; font-size: 12px; }
-.segmented [data-state="on"] { background: var(--accent); color: var(--primary); border-color: var(--primary); }
+.segmented [data-pressed] { background: var(--accent); color: var(--primary); border-color: var(--primary); }
 .optional { color: var(--muted-foreground); font-size: 12px; font-weight: 450; margin-left: 5px; }
 .advanced-section { padding-block: 10px; }
 .advanced-title { display: flex; align-items: center; gap: 12px; font-size: 13px; }
