@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { DisplayRow, Settings, ThemeId } from './model'
+import { derivePalette, isLight } from './palette'
 
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
   emerald: { name: 'Emerald', background: '#103e36', surface: '#194b41', ink: '#fff8e8', muted: '#b6c9bc', gold: '#e5bd7c' },
@@ -78,13 +79,16 @@ function relativeWording(minutes: number, language: Settings['language']) {
   return language === 'ar' ? [{ value: arabic, arabic: true }, { value: 'بعد الأذان', arabic: true }] : [{ value: english, arabic: false }, { value: 'after adhan', arabic: false }]
 }
 
+export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
+  settings.theme === 'custom' ? derivePalette(settings.customColor, settings.customAccent) : ARTWORK_THEMES[settings.theme]
+
 function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[]) {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Your browser could not create the profile image. Please try another browser.')
   canvas.width = SIZE
   canvas.height = SIZE
   delete canvas.dataset.fitWarning
-  const theme = ARTWORK_THEMES[settings.theme]
+  const theme = themeColors(settings)
   const gradient = ctx.createRadialGradient(410, 240, 30, 540, 540, 760)
   gradient.addColorStop(0, theme.surface)
   gradient.addColorStop(1, theme.background)
@@ -168,7 +172,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const labelWidth = (bothColumns ? 200 : 246) * widthScale
     const valueWidth = timeWidth * widthScale
     if (index % 2 === 0) {
-      ctx.globalAlpha = settings.theme === 'ivory' || settings.theme === 'rose' ? 0.05 : 0.045
+      ctx.globalAlpha = isLight(theme.background) ? 0.05 : 0.045
       ctx.fillStyle = theme.ink
       ctx.beginPath()
       ctx.roundRect(540 - halfWidth, y - gap / 2 + 3, halfWidth * 2, gap - 6, 12)

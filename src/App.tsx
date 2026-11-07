@@ -14,6 +14,8 @@ import { clearSharedCode, decodeSettings, readSettingsFile, readSharedCode, save
 import { PRAYERS, MAX_ROWS, THEME_IDS, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
 import { createDefaults, getDisplayRows, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
+import { derivePalette, isLight } from './palette'
+import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
 
 function restore() {
   try {
@@ -79,6 +81,8 @@ export default function App() {
   const [editNotice, setEditNotice] = useState('')
   const [previewPinned, setPreviewPinned] = useState(false)
   const [fitWarning, setFitWarning] = useState(false)
+  const [editingColour, setEditingColour] = useState<'main' | 'accent'>('main')
+  const customPalette = useMemo(() => derivePalette(settings.customColor, settings.customAccent), [settings.customColor, settings.customAccent])
   const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode())
   const [incoming, setIncoming] = useState<Settings | null>(null)
   const [shareNotice, setShareNotice] = useState('')
@@ -291,7 +295,24 @@ export default function App() {
           <section className="editor-section" aria-labelledby="appearance-heading">
             <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2><p>Choose a theme, language, and readable text size.</p></div></div>
             <FieldGroup>
-              <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[settings.theme]} onValueChange={([value]) => { const theme = THEME_IDS.find(theme => theme === value); if (theme) update('theme', theme) }}>{THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch" style={{ color: ARTWORK_THEMES[theme].gold, background: ARTWORK_THEMES[theme].background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}</ToggleGroup></Field>
+              <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[settings.theme]} onValueChange={([value]) => { const theme = [...THEME_IDS, 'custom' as const].find(theme => theme === value); if (theme) update('theme', theme) }}>{THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch" style={{ color: ARTWORK_THEMES[theme].gold, background: ARTWORK_THEMES[theme].background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}<ToggleGroupItem value="custom" className="theme-option"><span className="theme-swatch" style={{ color: customPalette.gold, background: customPalette.background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>Custom</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem></ToggleGroup></Field>
+              {settings.theme === 'custom' && <FieldSet className="custom-colours"><FieldLegend variant="label">Your colours</FieldLegend>
+                <ToggleGroup variant="outline" className="segmented" aria-label="Colour to edit" value={[editingColour]} onValueChange={([value]) => { if (value === 'main' || value === 'accent') setEditingColour(value) }}>
+                  <ToggleGroupItem value="main"><span className="colour-dot" style={{ background: settings.customColor }} aria-hidden="true" />Main colour</ToggleGroupItem>
+                  <ToggleGroupItem value="accent"><span className="colour-dot" style={{ background: customPalette.gold }} aria-hidden="true" />Accent{settings.customAccent ? '' : ' (auto)'}</ToggleGroupItem>
+                </ToggleGroup>
+                <ColorPicker key={editingColour} className="colour-picker" aria-label={editingColour === 'main' ? 'Main colour' : 'Accent colour'}
+                  value={editingColour === 'main' ? settings.customColor : settings.customAccent || customPalette.gold}
+                  onValueChange={value => update(editingColour === 'main' ? 'customColor' : 'customAccent', value)}>
+                  <ColorPickerArea />
+                  <ColorPickerHue />
+                  <div className="colour-row"><span className="colour-preview" style={{ background: editingColour === 'main' ? settings.customColor : customPalette.gold }} aria-hidden="true" /><ColorPickerInput id="custom-hex" aria-label={`${editingColour === 'main' ? 'Main' : 'Accent'} colour code`} aria-describedby="custom-colours-help" /></div>
+                  {editingColour === 'main' && <ColorPickerSwatches aria-label="Suggested colours">{['#103e36', '#1b2a6b', '#6d1a2c', '#32223f', '#0f4c5c', '#5a3e1b', '#25292b', '#f6efdf'].map(c => <ColorPickerSwatch key={c} value={c} className="colour-chip" />)}</ColorPickerSwatches>}
+                </ColorPicker>
+                {editingColour === 'accent' && settings.customAccent && <Button variant="link" className="colour-reset" onClick={() => update('customAccent', '')}>Use automatic accent</Button>}
+                <FieldDescription id="custom-colours-help">Text and accent colours are chosen for you and always meet WCAG AA contrast (4.5:1).{settings.customAccent ? ' Your accent is lightened or darkened if needed to stay readable.' : ' Leave the accent on automatic for a warm gold.'}</FieldDescription>
+                {customPalette.adjusted && <p className="custom-adjusted" role="status">Text can’t be read clearly on this colour, so the background is {isLight(customPalette.background) ? 'lighter' : 'deeper'}{settings.customAccent ? '' : ' and your colour is used for the times and headings'}. For an exact background, pick a darker or lighter colour.</p>}
+              </FieldSet>}
               <Field><FieldLabel id="language-label">Language</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="language-label" value={[settings.language]} onValueChange={([value]) => { if (value === 'en' || value === 'ar' || value === 'both') update('language', value) }}><ToggleGroupItem value="en">English</ToggleGroupItem><ToggleGroupItem value="ar" lang="ar">العربية</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field>
               <Field><FieldLabel id="text-size-label">Prayer text size</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="text-size-label" value={[settings.textSize]} onValueChange={([value]) => { if (value === 'standard' || value === 'large' || value === 'extra') update('textSize', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="large">Large</ToggleGroupItem><ToggleGroupItem value="extra">Extra large</ToggleGroupItem></ToggleGroup><FieldDescription>Prayer names and times grow together. Long text fits automatically inside the circle.</FieldDescription></Field>
               <Field><FieldLabel id="table-width-label">Table width</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="table-width-label" value={[settings.tableWidth]} onValueChange={([value]) => { if (value === 'standard' || value === 'wide') update('tableWidth', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="wide">Wide</ToggleGroupItem></ToggleGroup><FieldDescription>Wide gives names and times more room inside the circle. Combine it with a larger text size.</FieldDescription></Field>

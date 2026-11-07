@@ -1,5 +1,6 @@
 import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan'
 import { MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type Settings } from './model'
+import { isHex } from './palette'
 
 export const STORAGE_KEY = 'masjid-profile-studio-v1'
 const methods = ['NorthAmerica', 'MuslimWorldLeague', 'Egyptian', 'UmmAlQura', 'Karachi', 'MoonsightingCommittee'] as const
@@ -31,6 +32,11 @@ function choice<T extends string>(value: unknown, values: readonly T[], label: s
 function clock(value: unknown, label: string): string {
   if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new Error(`${label} must be a valid time (HH:MM).`)
   return value
+}
+
+function hex(value: unknown, label: string) {
+  if (typeof value !== 'string' || !isHex(value)) throw new Error(`${label} must be a colour like #1f5c4a.`)
+  return value.toLowerCase()
 }
 
 export function validateSettings(value: unknown): Settings {
@@ -84,7 +90,10 @@ export function validateSettings(value: unknown): Settings {
     longitude: number(s.longitude, 'Longitude', -180, 180), timezone,
     method: choice(s.method, methods, 'calculation method'), madhab: choice(s.madhab, ['standard', 'hanafi'], 'Asr convention'),
     date, endDate, language: choice(s.language, ['en', 'ar', 'both'], 'language'),
-    theme: choice(s.theme, THEME_IDS, 'theme'),
+    theme: choice(s.theme, [...THEME_IDS, 'custom'] as const, 'theme'),
+    // Custom colours are optional and absent from older saved settings and links.
+    customColor: s.customColor === undefined ? '#1f5c4a' : hex(s.customColor, 'Custom colour'),
+    customAccent: s.customAccent === undefined || s.customAccent === '' ? '' : hex(s.customAccent, 'Accent colour'),
     timeDisplay: choice(s.timeDisplay, ['iqamah', 'adhan', 'both'], 'time columns'),
     use24Hour: boolean(s.use24Hour, '24-hour format'),
     textSize: s.textSize === undefined ? 'standard' : choice(s.textSize, ['standard', 'large', 'extra'], 'prayer text size'),
@@ -100,7 +109,7 @@ export function createDefaults(): Settings {
   return {
     version: 1, name: 'Masjid Abu Bakr', nameAr: 'مسجد أبو بكر', location: '11010 N 30th St, Tampa, FL',
     latitude: 28.048619, longitude: -82.426613, timezone: 'America/New_York', method: 'NorthAmerica', madhab: 'standard',
-    date: `${part('year')}-${part('month')}-${part('day')}`, endDate: '', language: 'both', theme: 'emerald', timeDisplay: 'iqamah',
+    date: `${part('year')}-${part('month')}-${part('day')}`, endDate: '', language: 'both', theme: 'emerald', customColor: '#1f5c4a', customAccent: '', timeDisplay: 'iqamah',
     use24Hour: false, textSize: 'standard', tableWidth: 'standard', footer: '', customRows: [],
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
