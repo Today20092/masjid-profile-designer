@@ -18,7 +18,7 @@ export type Settings = {
   version: 1; name: string; nameAr: string; location: string;
   latitude: number; longitude: number; timezone: string;
   method: 'NorthAmerica' | 'MuslimWorldLeague' | 'Egyptian' | 'UmmAlQura' | 'Karachi' | 'MoonsightingCommittee';
-  madhab: 'standard' | 'hanafi'; date: string; language: Language;
+  madhab: 'standard' | 'hanafi'; date: string; endDate: string; language: Language;
   theme: ThemeId; timeDisplay: TimeDisplay; use24Hour: boolean;
   textSize: 'standard' | 'large' | 'extra';
   tableWidth: 'standard' | 'wide';

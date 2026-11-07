@@ -191,7 +191,8 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   })
 
   const date = new Date(`${settings.date}T12:00:00Z`)
-  const dateLabel = new Intl.DateTimeFormat(arabicOnly ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date)
+  const dateFormat = new Intl.DateTimeFormat(arabicOnly ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  const dateLabel = settings.endDate && settings.endDate !== settings.date ? dateFormat.formatRange(date, new Date(`${settings.endDate}T12:00:00Z`)) : dateFormat.format(date)
   text(ctx, dateLabel, 540, 914, 490, 25, theme.muted, arabicOnly)
   if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[\u0600-\u06ff]/.test(settings.footer))
 }
@@ -215,7 +216,7 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
   return <>
     <canvas ref={canvasRef} width={SIZE} height={SIZE} className={className} aria-label="Prayer timetable preview" aria-describedby={descriptionId} role="img" style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '50%' }} />
     <p id={descriptionId} className="sr-only">
-      {settings.name} {settings.nameAr}. {settings.date}.
+      {settings.name} {settings.nameAr}. {settings.date}{settings.endDate && settings.endDate !== settings.date ? ` to ${settings.endDate}` : ''}.
       {rows.map(row => {
         const label = settings.language === 'ar' ? row.ar || row.en : settings.language === 'en' ? row.en || row.ar : [row.en, row.ar].filter(Boolean).join(' ')
         const iqamah = row.relativeMinutes === undefined ? row.iqamah : relativeWording(row.relativeMinutes, settings.language).map(line => line.value).join(' ')

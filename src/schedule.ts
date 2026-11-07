@@ -41,6 +41,12 @@ export function validateSettings(value: unknown): Settings {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date || date < '1900-01-01' || date > '2100-12-31') {
     throw new Error('Choose a valid date between 1900 and 2100.')
   }
+  // endDate is optional ('' = single day) and absent from older saved settings and links.
+  const endDate = s.endDate === undefined ? '' : text(s.endDate, 'End date', 10)
+  const end = new Date(`${endDate}T12:00:00Z`)
+  if (endDate && (!/^\d{4}-\d{2}-\d{2}$/.test(endDate) || !Number.isFinite(end.getTime()) || end.toISOString().slice(0, 10) !== endDate || endDate < date || endDate > '2100-12-31')) {
+    throw new Error('End date must be a valid date on or after the start date.')
+  }
   const timezone = text(s.timezone, 'Timezone', 100, true)
   try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(parsed) }
   catch { throw new Error('Enter a valid timezone, such as America/New_York.') }
@@ -77,7 +83,7 @@ export function validateSettings(value: unknown): Settings {
     location: text(s.location, 'Location', 160), latitude: number(s.latitude, 'Latitude', -90, 90),
     longitude: number(s.longitude, 'Longitude', -180, 180), timezone,
     method: choice(s.method, methods, 'calculation method'), madhab: choice(s.madhab, ['standard', 'hanafi'], 'Asr convention'),
-    date, language: choice(s.language, ['en', 'ar', 'both'], 'language'),
+    date, endDate, language: choice(s.language, ['en', 'ar', 'both'], 'language'),
     theme: choice(s.theme, THEME_IDS, 'theme'),
     timeDisplay: choice(s.timeDisplay, ['iqamah', 'adhan', 'both'], 'time columns'),
     use24Hour: boolean(s.use24Hour, '24-hour format'),
@@ -94,7 +100,7 @@ export function createDefaults(): Settings {
   return {
     version: 1, name: 'Masjid Abu Bakr', nameAr: 'مسجد أبو بكر', location: '11010 N 30th St, Tampa, FL',
     latitude: 28.048619, longitude: -82.426613, timezone: 'America/New_York', method: 'NorthAmerica', madhab: 'standard',
-    date: `${part('year')}-${part('month')}-${part('day')}`, language: 'both', theme: 'emerald', timeDisplay: 'iqamah',
+    date: `${part('year')}-${part('month')}-${part('day')}`, endDate: '', language: 'both', theme: 'emerald', timeDisplay: 'iqamah',
     use24Hour: false, textSize: 'standard', tableWidth: 'standard', footer: '', customRows: [],
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
