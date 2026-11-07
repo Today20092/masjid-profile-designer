@@ -243,3 +243,18 @@ body:has(input:focus) .mobile-download { display: none; }
   .privacy-note { font-size: 11px; border: 1px solid var(--border); border-radius: 50px; padding: 9px 13px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* box-shadow focus rings vanish in forced colors; give keyboard users a system outline */
+@media (forced-colors: active) {
+  :focus-visible { outline: 2px solid CanvasText; outline-offset: 2px; }
+}
+
+.start-card .editor-heading { justify-content: space-between; margin-bottom: 12px; }
+.start-steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; }
+.start-steps a, .start-link { color: var(--primary); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+.start-link { height: auto; min-height: 24px; padding: 0; font-size: 14px; white-space: normal; text-align: left; }
+.share-choice { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-actions [data-slot="button"] { min-height: 44px; }
+.share-status { margin: 10px 0 0; min-height: 1lh; font-size: 13px; color: var(--muted-foreground); }
+.share-error { color: var(--destructive); }

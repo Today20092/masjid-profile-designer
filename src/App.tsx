@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
-import { ArrowDownToLine, Check, CircleHelp, Clock3, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { ArrowDownToLine, Check, CircleHelp, Clock3, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -9,6 +9,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
+import { Spinner } from '@/components/ui/spinner'
+import { clearSharedCode, decodeSettings, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
 import { createDefaults, getDisplayRows, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
@@ -16,9 +18,9 @@ import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwor
 function restore() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
-    return { settings: saved ? validateSettings(JSON.parse(saved)) : createDefaults(), notice: '', blocked: false }
+    return { settings: saved ? validateSettings(JSON.parse(saved)) : createDefaults(), notice: '', blocked: false, firstVisit: !saved }
   } catch {
-    return { settings: createDefaults(), notice: 'Your saved settings could not be read. We opened the starting design and have not replaced your saved data.', blocked: true }
+    return { settings: createDefaults(), firstVisit: false, notice:'Your saved settings could not be read. We opened the starting design and have not replaced your saved data.', blocked: true }
   }
 }
 
@@ -77,6 +79,41 @@ export default function App() {
   const [editNotice, setEditNotice] = useState('')
   const [previewPinned, setPreviewPinned] = useState(false)
   const [fitWarning, setFitWarning] = useState(false)
+  const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode())
+  const [incoming, setIncoming] = useState<Settings | null>(null)
+  const [shareNotice, setShareNotice] = useState('')
+  const [shareError, setShareError] = useState('')
+  const [linkMessage, setLinkMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    const code = readSharedCode()
+    if (!code) return
+    decodeSettings(code).then(shared => {
+      // A first-time visitor has nothing to lose, so open the shared design straight away.
+      if (initial.firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setLinkMessage({ ok: true, text: `Opened the shared design for ${shared.name}. Your changes save on this browser.` }) }
+      else setIncoming(shared)
+    }, () => { clearSharedCode(); setLinkMessage({ ok: false, text: 'This design link is damaged or incomplete, so your current design was kept. Ask for the link again.' }) })
+  }, [initial.firstVisit])
+
+  function acceptIncoming(use: boolean) {
+    if (use && incoming) { setSettings(incoming); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}. Use Undo to return to your previous design.` }) }
+    setIncoming(null); clearSharedCode()
+  }
+  async function copyLink() {
+    if (!result.settings) return
+    setShareNotice(''); setShareError('')
+    const url = await shareLink(result.settings)
+    try { await navigator.clipboard.writeText(url); setShareNotice('Link copied. Anyone who opens it gets their own editable copy of this design.') }
+    catch { window.prompt('Copy this link to share your design:', url) }
+  }
+  async function openFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setShareNotice(''); setShareError('')
+    try { const opened = await readSettingsFile(file); setSettings(opened); setShareNotice(`Opened ${file.name}. Use Undo to return to your previous design.`) }
+    catch { setShareError(`${file.name} is not a Masjid Profile Studio settings file. Your design was not changed.`) }
+  }
   const result = useMemo(() => {
     try {
       const valid = validateSettings(settings)
@@ -88,7 +125,7 @@ export default function App() {
     setSaved(false)
     if (storageBlocked || !result.settings) return
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(result.settings)); setSaved(true); setStorageNotice('') }
-    catch { setStorageNotice('This browser cannot save your settings. You can still edit and download your image; keep this page open to retain your changes.') }
+    catch { setStorageNotice('This browser cannot save your settings. You can still edit and download your image; copy a share link or save a settings file below to keep your changes.') }
   }, [result.settings, storageBlocked])
 
   useEffect(() => {
@@ -181,11 +218,23 @@ export default function App() {
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div><Check className="example-check" aria-hidden="true" />
           </div><Separator />
-          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}><ArrowDownToLine data-icon="inline-start" />{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
+          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
         </div></section>
         <section className="editor-column" aria-label="Customize your timetable">
           {previewPinned && <aside className="mobile-edit-preview" id="editing-preview" aria-label="Preview while editing"><div className="editing-artwork" aria-hidden="true">{result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} /> : <p>Fix your settings to see the preview.</p>}</div><div><strong>Live preview</strong><p>Your changes appear here.</p><Button asChild variant="link"><a href="#preview-title" onClick={() => setPreviewPinned(false)}>Full image</a></Button><Button variant="outline" onClick={() => setPreviewPinned(false)}>Close preview</Button></div></aside>}
+          {startOpen && <section className="editor-section start-card" aria-labelledby="start-heading">
+            <div className="editor-heading"><div><h2 id="start-heading">Start here</h2><p>Three steps to your masjid’s profile image. Everything else is optional.</p></div><Button variant="ghost" size="icon" className="start-dismiss" aria-label="Close Start here" onClick={() => setStartOpen(false)}><X /></Button></div>
+            <ol className="start-steps">
+              <li><a href="#name" onClick={() => requestAnimationFrame(() => document.getElementById('name')?.focus())}>Enter your masjid’s name</a></li>
+              <li><Button variant="link" className="start-link" disabled={locating} onClick={useLocation}>Use my location for prayer times</Button></li>
+              <li><a href="#appearance-heading">Choose a design</a>, then download your image</li>
+            </ol>
+          </section>}
+          {(incoming || linkMessage) && <div className="notices" aria-live="polite">
+            {incoming && <Alert><Link /><AlertTitle>You opened a shared design for {incoming.name}</AlertTitle><AlertDescription>Your own design is still saved on this browser.<div className="share-choice"><Button onClick={() => acceptIncoming(true)}>Use shared design</Button><Button variant="outline" onClick={() => acceptIncoming(false)}>Keep my design</Button></div></AlertDescription></Alert>}
+            {linkMessage && <Alert variant={linkMessage.ok ? 'default' : 'destructive'}>{linkMessage.ok ? <Check /> : <CircleHelp />}<AlertTitle>{linkMessage.ok ? 'Shared design opened' : 'Design not opened'}</AlertTitle><AlertDescription>{linkMessage.text}</AlertDescription></Alert>}
+          </div>}
           {(storageNotice || result.error || exportError) && <div className="notices" id="settings-errors" tabIndex={-1}>
             {storageNotice && <Alert><CircleHelp /><AlertTitle>Browser storage</AlertTitle><AlertDescription>{storageNotice}{storageBlocked && <Button variant="outline" className="storage-acknowledge" onClick={() => setStorageBlocked(false)}>Use starting design and replace saved data</Button>}</AlertDescription></Alert>}
             {result.error && <Alert variant="destructive"><CircleHelp /><AlertTitle>Check your settings</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert>}
@@ -243,18 +292,28 @@ export default function App() {
           </section>
           <section className="editor-section advanced-section" id="calculation-settings" aria-label="Location and calculation"><Accordion type="single" collapsible value={calculationOpen ? 'location' : ''} onValueChange={value => setCalculationOpen(value === 'location')}><AccordionItem value="location"><AccordionTrigger><span className="advanced-title"><LocateFixed aria-hidden="true" /><span>Location & calculation<span>For automatic adhan times</span></span></span></AccordionTrigger><AccordionContent><FieldGroup className="advanced-fields">
             <p className="section-description">Starting settings are North America (ISNA), standard Asr. These are editable defaults, not settings approved by your masjid.</p>
-            <Button variant="outline" disabled={locating} onClick={useLocation}><LocateFixed data-icon="inline-start" />{locating ? 'Finding your location…' : 'Use my device location'}</Button>
+            <Button variant="outline" disabled={locating} onClick={useLocation}>{locating ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <LocateFixed data-icon="inline-start" />}{locating ? 'Finding your location…' : 'Use my device location'}</Button>
             {locationNotice && <p role="status" className="location-status">{locationNotice}</p>}{locationError && <FieldError>{locationError}</FieldError>}
             <FieldGroup className="two-fields"><NumberField id="latitude" label="Latitude" min={-90} max={90} step="any" value={settings.latitude} onChange={value => update('latitude', value)} /><NumberField id="longitude" label="Longitude" min={-180} max={180} step="any" value={settings.longitude} onChange={value => update('longitude', value)} /></FieldGroup>
             <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
+          <section className="editor-section" aria-labelledby="share-heading">
+            <div className="editor-heading"><div><h2 id="share-heading">Share or back up</h2><p>Changes save on this browser automatically. To send this design or keep a copy, use a link or a settings file.</p></div></div>
+            <div className="share-actions">
+              <Button variant="outline" disabled={!result.settings} onClick={copyLink}><Link data-icon="inline-start" />Copy share link</Button>
+              <Button variant="outline" disabled={!result.settings} onClick={() => { if (result.settings) { saveSettingsFile(result.settings); setShareError(''); setShareNotice('Settings file saved. Open it here any time to restore this design.') } }}><FileDown data-icon="inline-start" />Save settings file</Button>
+              <Button variant="outline" onClick={() => document.getElementById('settings-file')?.click()}><FileUp data-icon="inline-start" />Open settings file</Button>
+              <input id="settings-file" type="file" accept="application/json,.json" hidden onChange={openFile} />
+            </div>
+            <p className={shareError ? 'share-status share-error' : 'share-status'} role="status">{shareError || shareNotice}</p>
+          </section>
           <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo}>Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
           <p className="history-help">Keyboard: Ctrl/Cmd+Z to undo; Ctrl/Cmd+Shift+Z to redo. Text fields keep their normal editing shortcuts.</p>
         </section>
       </div>
       <footer className="site-footer"><span>Made for the moments we come together.</span><span>No account. No uploads. Just your community.</span></footer>
     </main>
-    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button className="undo-button" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}><ArrowDownToLine data-icon="inline-start" />{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? 'Preparing a 1080 × 1080 PNG…' : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? 'Saved on this browser · 1080 × 1080 PNG' : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
+    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button className="undo-button" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? 'Preparing a 1080 × 1080 PNG…' : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? 'Saved on this browser · 1080 × 1080 PNG' : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
   </>
 }

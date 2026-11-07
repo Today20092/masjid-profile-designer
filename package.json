@@ -12,7 +12,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "check": "tsc -b",
-    "check:schedule": "tsx scripts/check-schedule.ts"
+    "check:schedule": "tsx scripts/check-schedule.ts",
+    "check:share": "tsx scripts/check-share.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",
