@@ -255,7 +255,8 @@ export function ColorPickerInput({
         setFocused(true);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter") setHex(draft);
+        // keyCode 229: Safari ends composition before the confirming Enter keydown
+        if (e.key === "Enter" && !e.nativeEvent.isComposing && e.keyCode !== 229) setHex(draft);
       }}
       spellCheck={false}
       value={focused ? draft : hex}
