@@ -7,7 +7,7 @@ settings.date = '2026-10-21'
 settings.use24Hour = true
 assert.equal(validateSettings(JSON.parse(JSON.stringify(settings))).name, 'Masjid Abu Bakr')
 assert.equal(validateSettings({ ...settings, confirmed: false }).name, settings.name)
-const withoutTextSize = JSON.parse(JSON.stringify(settings))
+const withoutTextSize = structuredClone(settings)
 delete withoutTextSize.textSize
 assert.equal(validateSettings(withoutTextSize).textSize, 'standard')
 assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'extra')
@@ -37,7 +37,7 @@ assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativ
 relative.prayers.maghrib.showRelative = true
 relative.prayers.maghrib.iqamahMode = 'fixed'
 assert.equal(getDisplayRows(relative).find(row => row.id === 'maghrib')!.relativeMinutes, undefined)
-const legacy = JSON.parse(JSON.stringify(settings))
+const legacy = structuredClone(settings)
 delete legacy.prayers.maghrib.showRelative
 assert.equal(validateSettings(legacy).prayers.maghrib.showRelative, false)
 assert.throws(() => validateSettings({ ...settings, prayers: { ...settings.prayers, maghrib: { ...settings.prayers.maghrib, showRelative: 'yes' } } }), /relative wording/)
