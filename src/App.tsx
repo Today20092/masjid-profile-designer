@@ -88,6 +88,7 @@ export default function App() {
   const [shareNotice, setShareNotice] = useState('')
   const [shareError, setShareError] = useState('')
   const [linkMessage, setLinkMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const [spokenError, setSpokenError] = useState('')
 
   useEffect(() => {
     const code = readSharedCode()
@@ -124,6 +125,14 @@ export default function App() {
       return { settings: valid, rows: getDisplayRows(valid), error: '' }
     } catch (error) { return { settings: null, rows: [], error: error instanceof Error ? error.message : 'Please check your settings.' } }
   }, [settings])
+
+  // One polite live region for settings errors, a moment later so it doesn't talk over the field that gets focus next.
+  useEffect(() => {
+    setSpokenError('')
+    if (!result.error) return
+    const timer = setTimeout(() => setSpokenError(result.error), 500)
+    return () => clearTimeout(timer)
+  }, [result.error])
 
   useEffect(() => {
     setSaved(false)
@@ -209,13 +218,13 @@ export default function App() {
       <span className="privacy-note"><LockKeyhole aria-hidden="true" /><span>Made on your device</span></span>
     </header>
     <main id="main" className="studio-shell" data-preview-pinned={previewPinned} onBlurCapture={() => dispatch({ type: 'end-group' })}>
-      <section className="intro" aria-labelledby="page-title"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={buttonVariants({ variant: 'outline' })} href="#times-heading">Edit times</a><a className={buttonVariants({ variant: 'outline' })} href="#appearance-heading">Choose design</a></nav></section>
+      <section className="intro"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={buttonVariants({ variant: 'outline' })} href="#times-heading">Edit times</a><a className={buttonVariants({ variant: 'outline' })} href="#appearance-heading">Choose design</a></nav></section>
       <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title"><div className="preview-sticky">
           <div className="section-topline"><h2 id="preview-title" tabIndex={-1}>Your profile image</h2><span className="live-label"><span />Live preview</span></div>
           <div className="preview-stage"><div className="preview-orbit" aria-hidden="true" />
             {result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} className="main-artwork" onFitWarning={setFitWarning} /> : <div className="preview-unavailable"><CircleHelp aria-hidden="true" /><p>Complete your settings<br />to see your design.</p></div>}
-            <span className="crop-note">DESIGNED TO FIT THE CIRCLE</span>
+            <span className="crop-note">Designed to fit the circle</span>
           </div>
           {fitWarning && <p className="fit-warning" role="status">Some text was reduced to fit. Shorten labels, show fewer rows, or use one time column for clearer text.</p>}
           <div className="whatsapp-example">
@@ -227,7 +236,7 @@ export default function App() {
         </div></section>
         <section className="editor-column" aria-label="Customize your timetable">
           {previewPinned && <aside className="mobile-edit-preview" id="editing-preview" aria-label="Preview while editing"><div className="editing-artwork" aria-hidden="true">{result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} /> : <p>Fix your settings to see the preview.</p>}</div><div><strong>Live preview</strong><p>Your changes appear here.</p><a className={buttonVariants({ variant: 'link' })} href="#preview-title" onClick={() => setPreviewPinned(false)}>Full image</a><Button variant="outline" onClick={() => setPreviewPinned(false)}>Close preview</Button></div></aside>}
-          {startOpen && <section className="editor-section start-card" aria-labelledby="start-heading">
+          {startOpen && <section className="editor-section start-card">
             <div className="editor-heading"><div><h2 id="start-heading">Start here</h2><p>Three steps to your masjid’s profile image. Everything else is optional.</p></div><Button variant="ghost" size="icon" className="start-dismiss" aria-label="Close Start here" onClick={() => setStartOpen(false)}><X /></Button></div>
             <ol className="start-steps">
               <li><a href="#name" onClick={() => requestAnimationFrame(() => document.getElementById('name')?.focus())}>Enter your masjid’s name</a></li>
@@ -241,10 +250,10 @@ export default function App() {
           </div>}
           {(storageNotice || result.error || exportError) && <div className="notices" id="settings-errors" tabIndex={-1}>
             {storageNotice && <Alert><CircleHelp /><AlertTitle>Browser storage</AlertTitle><AlertDescription>{storageNotice}{storageBlocked && <Button variant="outline" className="storage-acknowledge" onClick={() => setStorageBlocked(false)}>Use starting design and replace saved data</Button>}</AlertDescription></Alert>}
-            {result.error && <Alert variant="destructive"><CircleHelp /><AlertTitle>Check your settings</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert>}
+            {result.error && <Alert variant="destructive" role={undefined}><CircleHelp /><AlertTitle>Check your settings</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert>}
             {exportError && <Alert variant="destructive"><CircleHelp /><AlertTitle>Download did not finish</AlertTitle><AlertDescription>{exportError}</AlertDescription></Alert>}
           </div>}
-          <section className="editor-section" aria-labelledby="identity-heading">
+          <section className="editor-section">
             <div className="editor-heading"><div><h2 id="identity-heading">Your masjid</h2><p>A familiar name for your community.</p></div></div>
             <FieldGroup>
               <Field data-invalid={!settings.name.trim()}><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" required aria-invalid={!settings.name.trim()} aria-describedby={!settings.name.trim() ? 'name-error' : undefined} maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} />{!settings.name.trim() && <FieldError id="name-error">Enter your masjid’s name.</FieldError>}</Field>
@@ -261,7 +270,7 @@ export default function App() {
                 </FieldSet>
             </FieldGroup>
           </section>
-          <section className="editor-section" aria-labelledby="times-heading">
+          <section className="editor-section">
             <div className="editor-heading"><div><h2 id="times-heading" tabIndex={-1}>Prayer times</h2><p>Your iqamah. Your community’s rhythm.</p></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
             <p className="section-description">Edit iqamah times below. Open a prayer’s options for delays and adhan adjustments.</p>
             <div className="calculation-summary"><p>Adhan is calculated. Confirm the location and method, and use your masjid’s iqamah times.</p><a className={buttonVariants({ variant: 'link' })} href="#calculation-settings" onClick={() => setCalculationOpen(true)}>Review calculation settings</a></div>
@@ -292,7 +301,7 @@ export default function App() {
             </FieldSet>
             <Button variant="outline" className="add-row" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={() => update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: 'Additional prayer', ar: 'صلاة إضافية', time: '13:30', enabled: true }])}><Plus data-icon="inline-start" />Add a custom row</Button>
           </section>
-          <section className="editor-section" aria-labelledby="appearance-heading">
+          <section className="editor-section">
             <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2><p>Choose a theme, language, and readable text size.</p></div></div>
             <FieldGroup>
               <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[settings.theme]} onValueChange={([value]) => { const theme = [...THEME_IDS, 'custom' as const].find(theme => theme === value); if (theme) update('theme', theme) }}>{THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch" style={{ color: ARTWORK_THEMES[theme].gold, background: ARTWORK_THEMES[theme].background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}<ToggleGroupItem value="custom" className="theme-option"><span className="theme-swatch" style={{ color: customPalette.gold, background: customPalette.background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>Custom</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem></ToggleGroup></Field>
@@ -320,7 +329,7 @@ export default function App() {
               <Field><FieldLabel htmlFor="footer">A small note <span className="optional">Optional</span></FieldLabel><Input id="footer" maxLength={80} placeholder="Please arrive a few minutes early" value={settings.footer} onChange={e => update('footer', e.target.value)} /></Field>
             </FieldGroup>
           </section>
-          <section className="editor-section advanced-section" id="calculation-settings" aria-label="Location and calculation"><Accordion value={calculationOpen ? ['location'] : []} onValueChange={value => setCalculationOpen(value.includes('location'))}><AccordionItem value="location"><AccordionTrigger><span className="advanced-title"><LocateFixed aria-hidden="true" /><span>Location & calculation<span>For automatic adhan times</span></span></span></AccordionTrigger><AccordionContent><FieldGroup className="advanced-fields">
+          <section className="editor-section advanced-section" id="calculation-settings"><Accordion value={calculationOpen ? ['location'] : []} onValueChange={value => setCalculationOpen(value.includes('location'))}><AccordionItem value="location"><AccordionTrigger><span className="advanced-title"><LocateFixed aria-hidden="true" /><span>Location & calculation<span>For automatic adhan times</span></span></span></AccordionTrigger><AccordionContent><FieldGroup className="advanced-fields">
             <p className="section-description">Starting settings are North America (ISNA), standard Asr. These are editable defaults, not settings approved by your masjid.</p>
             <Button variant="outline" disabled={locating} onClick={useLocation}>{locating ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <LocateFixed data-icon="inline-start" />}{locating ? 'Finding your location…' : 'Use my device location'}</Button>
             {locationNotice && <p role="status" className="location-status">{locationNotice}</p>}{locationError && <FieldError>{locationError}</FieldError>}
@@ -328,7 +337,7 @@ export default function App() {
             <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
-          <section className="editor-section" aria-labelledby="share-heading">
+          <section className="editor-section">
             <div className="editor-heading"><div><h2 id="share-heading">Share or back up</h2><p>Changes save on this browser automatically. To send this design or keep a copy, use a link or a settings file.</p></div></div>
             <div className="share-actions">
               <Button variant="outline" disabled={!result.settings} onClick={copyLink}><Link data-icon="inline-start" />Copy share link</Button>
@@ -342,6 +351,7 @@ export default function App() {
           <p className="history-help">Keyboard: Ctrl/Cmd+Z to undo; Ctrl/Cmd+Shift+Z to redo. Text fields keep their normal editing shortcuts.</p>
         </section>
       </div>
+      <p className="sr-only error-announcer" aria-live="polite">{spokenError}</p>
       <footer className="site-footer"><span>Made for the moments we come together.</span><span>No account. No uploads. Just your community.</span></footer>
     </main>
     <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button className="undo-button" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? 'Preparing a 1080 × 1080 PNG…' : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? 'Saved on this browser · 1080 × 1080 PNG' : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
