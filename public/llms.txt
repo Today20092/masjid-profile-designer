@@ -1,0 +1,98 @@
+# Masjid Profile Studio
+
+> Free web app that turns a masjid's prayer timetable into a 1080 × 1080 WhatsApp profile image, in English, Arabic or both. AI assistants can make a design by writing a link: no account, API key or server call is needed.
+
+App: https://today20092.github.io/masjid-profile-designer/
+
+## When a user sends you a timetable photo
+
+1. Read the masjid name (English and Arabic, if shown), the date or date range, and each iqamah time.
+2. Build a design JSON object as described below. Include only what the photo shows; anything you leave out uses a sensible default.
+3. Reply with the AI link. Opening it loads the design and downloads the PNG. The user can still edit it on the page.
+
+Do not invent times. If a time is unreadable, leave that prayer out and tell the user, so they can add it on the page.
+
+## AI link format
+
+    https://today20092.github.io/masjid-profile-designer/#download&json=<design JSON>
+
+- Percent-encode the JSON, as JavaScript's encodeURIComponent does, so the link stays clickable in chat. Compact JSON without spaces also works when you cannot encode it.
+- `json=` must be the last part of the link.
+- Leave out `download&` to open the design for editing without downloading the image.
+- Everything after `#` stays in the user's browser; it is never sent to a server.
+- If the link has a mistake, the page shows the reason. The user may paste that message back to you: fix the JSON and send a new link.
+
+## Design JSON
+
+Every field is optional except `name`.
+
+| Field | Value |
+| --- | --- |
+| `name` | Masjid name in English, up to 64 characters. Required. |
+| `nameAr` | Masjid name in Arabic, up to 64 characters. |
+| `location` | Short address or city, up to 70 characters. Shown under the name when `language` is `en` or `ar`. |
+| `date` | Start date, `YYYY-MM-DD`. Default: today. |
+| `endDate` | Optional end date, `YYYY-MM-DD`, on or after `date`, for a range like "8–15 November". |
+| `language` | `both` (default), `en` or `ar`. |
+| `timeDisplay` | `iqamah` (default), `adhan`, or `both`. Adhan times are calculated from `latitude`, `longitude` and `timezone`. |
+| `use24Hour` | `false` (default) shows 1:30 PM; `true` shows 13:30. |
+| `theme` | `emerald` (default), `midnight`, `ivory`, `plum`, `rose`, `charcoal`, or `custom`. |
+| `customColor` | With `theme: "custom"`: main colour, like `#1f5c4a`. |
+| `customAccent` | With `theme: "custom"`: accent colour, like `#c9a227`. |
+| `textSize` | `standard` (default), `large` or `extra`. |
+| `tableWidth` | `standard` (default) or `wide`. |
+| `footer` | One line under the table, up to 100 characters, such as a website or phone number. |
+| `latitude`, `longitude`, `timezone` | The masjid's coordinates and IANA timezone, like `America/New_York`. Needed only for adhan times or iqamah given as minutes after adhan. Default: Tampa, Florida. |
+| `method` | Adhan calculation: `NorthAmerica` (default), `MuslimWorldLeague`, `Egyptian`, `UmmAlQura`, `Karachi`, `MoonsightingCommittee`. |
+| `madhab` | Asr convention: `standard` (default) or `hanafi`. |
+| `prayers` | Times for the built-in rows; see below. |
+| `customRows` | Extra rows, such as a second Jumu‘ah, Taraweeh or Eid; see below. |
+
+### prayers
+
+Keys: `fajr`, `sunrise`, `dhuhr`, `asr`, `maghrib`, `isha`, `jumuah`. Each value is an object:
+
+- `fixed`: the iqamah time, 24-hour `HH:MM`, like `"13:30"`. Giving it uses that exact time.
+- `delay`: instead of `fixed`, minutes after the calculated adhan (0–240). Set `latitude`, `longitude` and `timezone` too.
+- `enabled`: `false` hides the row. A prayer you list is shown.
+
+Fajr, Dhuhr, Asr, Maghrib, Isha and Jumu‘ah are shown by default with sample times, so give a time for each one the photo shows, and set `"enabled": false` for any it leaves out. Sunrise is hidden unless you list it.
+
+### customRows
+
+A list of rows shown after the built-in ones, each `{ "en": "...", "ar": "...", "time": "HH:MM" }`, labels up to 30 characters each.
+
+For more Jumu‘ah prayers, set the first one as `prayers.jumuah` and add the others as rows named exactly:
+
+| en | ar |
+| --- | --- |
+| `Jumu‘ah 2` | `الجمعة الثانية` |
+| `Jumu‘ah 3` | `الجمعة الثالثة` |
+| `Jumu‘ah 4` | `الجمعة الرابعة` |
+
+The built-in row is then labelled Jumu‘ah 1. The image fits at most 8 rows in total.
+
+## Example
+
+Timetable: Masjid Al-Noor, 27 November 2026, two Jumu‘ah prayers.
+
+    {
+      "name": "Masjid Al-Noor",
+      "nameAr": "مسجد النور",
+      "date": "2026-11-27",
+      "prayers": {
+        "fajr": { "fixed": "06:15" },
+        "dhuhr": { "fixed": "13:00" },
+        "asr": { "fixed": "15:45" },
+        "maghrib": { "fixed": "17:40" },
+        "isha": { "fixed": "19:45" },
+        "jumuah": { "fixed": "13:15" }
+      },
+      "customRows": [
+        { "en": "Jumu‘ah 2", "ar": "الجمعة الثانية", "time": "14:15" }
+      ]
+    }
+
+AI link:
+
+https://today20092.github.io/masjid-profile-designer/#download&json=%7B%22name%22%3A%22Masjid%20Al-Noor%22%2C%22nameAr%22%3A%22%D9%85%D8%B3%D8%AC%D8%AF%20%D8%A7%D9%84%D9%86%D9%88%D8%B1%22%2C%22date%22%3A%222026-11-27%22%2C%22prayers%22%3A%7B%22fajr%22%3A%7B%22fixed%22%3A%2206%3A15%22%7D%2C%22dhuhr%22%3A%7B%22fixed%22%3A%2213%3A00%22%7D%2C%22asr%22%3A%7B%22fixed%22%3A%2215%3A45%22%7D%2C%22maghrib%22%3A%7B%22fixed%22%3A%2217%3A40%22%7D%2C%22isha%22%3A%7B%22fixed%22%3A%2219%3A45%22%7D%2C%22jumuah%22%3A%7B%22fixed%22%3A%2213%3A15%22%7D%7D%2C%22customRows%22%3A%5B%7B%22en%22%3A%22Jumu%E2%80%98ah%202%22%2C%22ar%22%3A%22%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D8%A9%20%D8%A7%D9%84%D8%AB%D8%A7%D9%86%D9%8A%D8%A9%22%2C%22time%22%3A%2214%3A15%22%7D%5D%7D

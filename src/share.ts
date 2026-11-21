@@ -1,5 +1,5 @@
 import type { Settings } from './model'
-import { validateSettings } from './schedule'
+import { settingsFromPatch, validateSettings } from './schedule'
 
 // Settings travel in the URL fragment (#s=…), so they never reach a server.
 const MAX_CODE_LENGTH = 8000
@@ -19,6 +19,23 @@ export async function decodeSettings(code: string) {
 }
 
 export const readSharedCode = () => new URLSearchParams(location.hash.slice(1)).get('s')
+
+// AI link: #download&json=<JSON>. json= runs to the end of the fragment, so stray & or # inside the JSON still parse.
+export function readAiLink(hash = location.hash) {
+  const at = hash.indexOf('json=')
+  if (at < 0) return null
+  const text = hash.slice(at + 5)
+  let json = text
+  try { json = decodeURIComponent(text) } catch { /* the AI left raw % signs: use the text as written */ }
+  return { json, download: /(^#|&)download(=1)?&$/.test(hash.slice(0, at)) }
+}
+
+export function decodeAiDesign(json: string) {
+  if (json.length > 20_000) throw new Error('The design in this link is too long.')
+  let value: unknown
+  try { value = JSON.parse(json) } catch { throw new Error('The design in this link is not valid JSON. Check that it is complete and percent-encoded.') }
+  return settingsFromPatch(value)
+}
 export const clearSharedCode = () => history.replaceState(null, '', location.pathname + location.search)
 
 export async function shareLink(settings: Settings) {

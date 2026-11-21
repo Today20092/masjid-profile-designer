@@ -1,5 +1,5 @@
 import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan'
-import { MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type Settings } from './model'
+import { MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type PrayerId, type Settings } from './model'
 import { isHex } from './palette'
 
 export const STORAGE_KEY = 'masjid-profile-studio-v1'
@@ -117,6 +117,27 @@ export function createDefaults(): Settings {
       showRelative: prayer.id === 'maghrib',
     }])) as Settings['prayers'],
   }
+}
+
+// AI links (see public/llms.txt) send only what the timetable shows; the rest comes from the defaults.
+export function settingsFromPatch(value: unknown): Settings {
+  const patch = object(value, 'Design')
+  // Blank the sample masjid's identity so it never leaks into someone else's design.
+  const base = { ...createDefaults(), name: '', nameAr: '', location: '' }
+  const prayers: Record<string, unknown> = { ...base.prayers }
+  if (patch.prayers !== undefined) {
+    for (const [id, value] of Object.entries(object(patch.prayers, 'Prayer settings'))) {
+      if (!(id in prayers)) throw new Error(`Unknown prayer "${id}". Use ${PRAYERS.map(p => p.id).join(', ')}.`)
+      const row = object(value, `${id} settings`)
+      // A listed prayer is shown, and giving a time or a delay picks that mode unless the mode is stated.
+      const iqamahMode = row.iqamahMode ?? ('fixed' in row ? 'fixed' : 'delay' in row ? 'after' : base.prayers[id as PrayerId].iqamahMode)
+      prayers[id] = { ...base.prayers[id as PrayerId], enabled: true, ...row, iqamahMode }
+    }
+  }
+  const customRows = Array.isArray(patch.customRows)
+    ? patch.customRows.map((value, i) => ({ id: `custom-${i + 1}`, en: '', ar: '', enabled: true, ...object(value, `Custom row ${i + 1}`) }))
+    : patch.customRows ?? base.customRows
+  return validateSettings({ ...base, ...patch, version: 1, prayers, customRows })
 }
 
 export function getDisplayRows(settings: Settings): DisplayRow[] {
