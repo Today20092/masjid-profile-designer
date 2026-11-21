@@ -87,4 +87,13 @@ assert.throws(() => getDisplayRows(polar), /cannot be calculated/)
 polar.timeDisplay = 'iqamah'
 polar.prayers.maghrib.iqamahMode = 'fixed'
 assert.equal(getDisplayRows(polar).find(row => row.id === 'fajr')!.iqamah, '6:50 AM')
+
+// The built-in Jumu‘ah is numbered only while an extra "Jumu‘ah N" row is shown.
+const jumuah = createDefaults()
+jumuah.date = '2026-10-21'
+assert.equal(getDisplayRows(jumuah).find(row => row.id === 'jumuah')!.en, 'Jumu‘ah')
+jumuah.customRows = [{ id: 'j2', en: 'Jumu‘ah 2', ar: 'الجمعة الثانية', time: '14:30', enabled: true }]
+assert.deepEqual(getDisplayRows(jumuah).filter(row => row.en.startsWith('Jumu')).map(row => [row.en, row.ar]), [['Jumu‘ah 1', 'الجمعة الأولى'], ['Jumu‘ah 2', 'الجمعة الثانية']])
+jumuah.customRows[0].enabled = false
+assert.equal(getDisplayRows(jumuah).find(row => row.id === 'jumuah')!.en, 'Jumu‘ah')
 console.log('Schedule checks passed')
