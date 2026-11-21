@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
-import { ArrowDownToLine, Check, CircleHelp, Clock3, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
-import { PRAYERS, MAX_ROWS, THEME_IDS, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
+import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
 import { createDefaults, getDisplayRows, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
@@ -87,6 +87,9 @@ export default function App() {
   const [incoming, setIncoming] = useState<Settings | null>(null)
   const [shareNotice, setShareNotice] = useState('')
   const [shareError, setShareError] = useState('')
+  const [textOpen, setTextOpen] = useState(false)
+  const [settingsText, setSettingsText] = useState('')
+  const [textError, setTextError] = useState('')
   const [linkMessage, setLinkMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [spokenError, setSpokenError] = useState('')
 
@@ -235,6 +238,40 @@ export default function App() {
     update('customRows', settings.customRows.filter(item => item.id !== row.id))
     setEditNotice(`${row.en || 'Custom row'} removed. Undo brings it back.`)
   }
+  function addJumuah() {
+    const extras = settings.customRows.filter(row => isExtraJumuah(row.en))
+    const n = Math.max(1, ...extras.map(row => Number(row.en.split(' ')[1]))) + 1
+    // Next Jumu‘ah defaults to an hour after the latest one.
+    const latest = [settings.prayers.jumuah.fixed, ...extras.map(row => row.time)].filter(Boolean).sort().at(-1) || '13:30'
+    const [h, m] = latest.split(':').map(Number)
+    const minutes = Math.min(h * 60 + m + 60, 23 * 60 + 59)
+    const time = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+    update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: `Jumu‘ah ${n}`, ar: JUMUAH_AR[n - 1] || `الجمعة ${n}`, time, enabled: true }])
+  }
+  function clearEndDate() {
+    update('endDate', '')
+    setEditNotice('End date cleared. Undo brings it back.')
+    document.getElementById('end-date')?.focus()
+  }
+  function openText(open: boolean) {
+    setTextOpen(open); setTextError('')
+    if (open) setSettingsText(JSON.stringify(settings, null, 2))
+  }
+  async function copyForAi() {
+    const prompt = 'Update these Masjid Profile Studio settings to match the attached timetable image. Keep the same JSON structure and keys. Use 24-hour HH:MM times, and "iqamahMode": "fixed" for set iqamah times. Extra rows, such as a second Jumu‘ah, go in "customRows", each with a unique "id". Return only the JSON.'
+    try { await navigator.clipboard.writeText(`${prompt}\n\n${settingsText}`); setTextError(''); setShareError(''); setShareNotice('Copied with instructions. Paste it into an AI chat with a photo of your timetable, then paste its answer back here.') }
+    catch { setTextError('Copying is blocked in this browser. Select the text below and copy it.') }
+  }
+  function applyText() {
+    // Forgive AI answers wrapped in ``` fences or a sentence: keep only the outermost { … }.
+    try {
+      const next = validateSettings(JSON.parse(settingsText.slice(settingsText.indexOf('{'), settingsText.lastIndexOf('}') + 1)))
+      setSettings(next); setSettingsText(JSON.stringify(next, null, 2)); setTextError(''); setShareError('')
+      setShareNotice('Settings applied. Undo brings back your previous design.')
+    } catch (error) {
+      setTextError(error instanceof SyntaxError ? 'This text is not complete settings. Check it runs from the first { to the last }. Your design was not changed.' : `${error instanceof Error ? error.message : 'These settings are not valid.'} Your design was not changed.`)
+    }
+  }
 
   const errorPrayer = PRAYERS.find(item => result.error.startsWith(`${item.en} fixed time`))
   const errorTarget = /timezone/i.test(result.error) ? 'timezone' : /latitude/i.test(result.error) ? 'latitude' : /longitude/i.test(result.error) ? 'longitude' : /end date/i.test(result.error) ? 'end-date' : /date/i.test(result.error) ? 'date' : /masjid name/i.test(result.error) ? 'name' : errorPrayer ? `time-${errorPrayer.id}` : 'settings-errors'
@@ -295,7 +332,7 @@ export default function App() {
                 <FieldSet className="date-range"><FieldLegend variant="label">Timetable dates</FieldLegend>
                   <div className="two-fields">
                     <Field data-invalid={errorTarget === 'date'}><FieldLabel htmlFor="date">Start</FieldLabel><Input id="date" required aria-invalid={errorTarget === 'date'} aria-describedby={errorTarget === 'date' ? 'date-range-help date-error' : 'date-range-help'} type="date" min="1900-01-01" max="2100-12-31" value={settings.date} onChange={e => update('date', e.target.value)} /></Field>
-                    <Field data-invalid={errorTarget === 'end-date'}><FieldLabel htmlFor="end-date">End <span className="optional-label">(optional)</span></FieldLabel><Input id="end-date" aria-invalid={errorTarget === 'end-date'} aria-describedby={errorTarget === 'end-date' ? 'date-range-help end-date-error' : 'date-range-help'} type="date" min={settings.date} max="2100-12-31" value={settings.endDate} onChange={e => update('endDate', e.target.value)} /></Field>
+                    <Field className="end-date-field" data-invalid={errorTarget === 'end-date'}><FieldLabel htmlFor="end-date">End <span className="optional-label">(optional)</span></FieldLabel><Input id="end-date" aria-invalid={errorTarget === 'end-date'} aria-describedby={errorTarget === 'end-date' ? 'date-range-help end-date-error' : 'date-range-help'} type="date" min={settings.date} max="2100-12-31" value={settings.endDate} onChange={e => update('endDate', e.target.value)} />{settings.endDate && <Button variant="link" className="clear-end-date" aria-label="Clear end date" onClick={clearEndDate}><X data-icon="inline-start" />Clear</Button>}</Field>
                   </div>
                   {errorTarget === 'date' && <FieldError id="date-error">{result.error}</FieldError>}
                   {errorTarget === 'end-date' && <FieldError id="end-date-error">{result.error}</FieldError>}
@@ -333,7 +370,10 @@ export default function App() {
                 <FieldGroup className="prayer-controls"><FieldGroup className="two-fields"><Field><FieldLabel htmlFor={`en-${row.id}`}>English label</FieldLabel><Input id={`en-${row.id}`} maxLength={30} value={row.en} onChange={e => custom(row.id, { en: e.target.value })} /></Field><Field><FieldLabel htmlFor={`ar-${row.id}`}>Arabic label</FieldLabel><Input id={`ar-${row.id}`} lang="ar" dir="rtl" maxLength={30} value={row.ar} onChange={e => custom(row.id, { ar: e.target.value })} /></Field></FieldGroup><Field><FieldLabel htmlFor={`custom-time-${row.id}`}>Time</FieldLabel><Input id={`custom-time-${row.id}`} type="time" required aria-invalid={!row.time} aria-describedby={!row.time ? `custom-time-${row.id}-error` : undefined} value={row.time} onChange={e => custom(row.id, { time: e.target.value })} />{!row.time && <FieldError id={`custom-time-${row.id}-error`}>Enter a time for this row.</FieldError>}</Field></FieldGroup>
               </div>)}
             </FieldSet>
-            <Button variant="outline" className="add-row" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={() => update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: 'Additional prayer', ar: 'صلاة إضافية', time: '13:30', enabled: true }])}><Plus data-icon="inline-start" />Add a custom row</Button>
+            <div className="add-rows">
+              <Button variant="outline" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={addJumuah}><Plus data-icon="inline-start" />Add Jumu‘ah</Button>
+              <Button variant="outline" disabled={enabledCount >= MAX_ROWS || settings.customRows.length >= MAX_ROWS} onClick={() => update('customRows', [...settings.customRows, { id: `custom-${crypto.randomUUID()}`, en: 'Additional prayer', ar: 'صلاة إضافية', time: '13:30', enabled: true }])}><Plus data-icon="inline-start" />Add a custom row</Button>
+            </div>
           </section>
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2><p>Choose a theme, language, and readable text size.</p></div></div>
@@ -385,6 +425,13 @@ export default function App() {
               <input id="settings-file" type="file" accept="application/json,.json" hidden onChange={openFile} />
             </div>
             <p className={shareError ? 'share-status share-error' : 'share-status'} role="status">{shareError || shareNotice}</p>
+            <Accordion className="settings-text" value={textOpen ? ['text'] : []} onValueChange={value => openText(value.includes('text'))}><AccordionItem value="text"><AccordionTrigger><span className="advanced-title"><Braces aria-hidden="true" /><span>Edit as text<span>Copy for an AI with a timetable photo, then paste its answer back</span></span></span></AccordionTrigger><AccordionContent>
+              <Field data-invalid={Boolean(textError)}><FieldLabel htmlFor="settings-text" className="sr-only">Settings as text</FieldLabel>
+                <textarea id="settings-text" className="settings-textarea" spellCheck={false} autoComplete="off" aria-invalid={Boolean(textError)} aria-describedby={textError ? 'settings-text-error' : undefined} value={settingsText} onChange={e => { setSettingsText(e.target.value); setTextError('') }} />
+                {textError && <FieldError id="settings-text-error">{textError}</FieldError>}
+              </Field>
+              <div className="share-actions"><Button variant="outline" onClick={copyForAi}><Copy data-icon="inline-start" />Copy for AI</Button><Button onClick={applyText}><Check data-icon="inline-start" />Apply</Button></div>
+            </AccordionContent></AccordionItem></Accordion>
           </section>
           <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo} title="Undo (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
         </section>

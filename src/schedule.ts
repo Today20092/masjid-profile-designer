@@ -1,5 +1,5 @@
 import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from 'adhan'
-import { MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type PrayerId, type Settings } from './model'
+import { isExtraJumuah, JUMUAH_AR, MAX_ROWS, PRAYERS, THEME_IDS, type DisplayRow, type PrayerId, type Settings } from './model'
 import { isHex } from './palette'
 
 export const STORAGE_KEY = 'masjid-profile-studio-v1'
@@ -172,7 +172,8 @@ export function getDisplayRows(settings: Settings): DisplayRow[] {
         throw new Error(`${prayer.en} cannot be calculated for this location and date. Use a fixed iqamah time or another location/date.`)
       }
     }
-    rows.push({ id: prayer.id, en: prayer.en, ar: prayer.ar, adhan, iqamah, ...(p.iqamahMode === 'after' && p.showRelative ? { relativeMinutes: p.delay } : {}) })
+    const numbered = prayer.id === 'jumuah' && s.customRows.some(row => row.enabled && isExtraJumuah(row.en))
+    rows.push({ id: prayer.id, en: numbered ? 'Jumu‘ah 1' : prayer.en, ar: numbered ? JUMUAH_AR[0] : prayer.ar, adhan, iqamah, ...(p.iqamahMode === 'after' && p.showRelative ? { relativeMinutes: p.delay } : {}) })
   }
   for (const row of s.customRows) {
     if (row.enabled) rows.push({ id: row.id, en: row.en, ar: row.ar, adhan: formatFixed(row.time), iqamah: formatFixed(row.time) })
