@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
-import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -10,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
-import { clearSharedCode, decodeSettings, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
+import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
 import { createDefaults, getDisplayRows, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
@@ -83,7 +83,7 @@ export default function App() {
   const [fitWarning, setFitWarning] = useState(false)
   const [editingColour, setEditingColour] = useState<'main' | 'accent'>('main')
   const customPalette = useMemo(() => derivePalette(settings.customColor, settings.customAccent), [settings.customColor, settings.customAccent])
-  const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode())
+  const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode() && !readAiLink())
   const [incoming, setIncoming] = useState<Settings | null>(null)
   const [shareNotice, setShareNotice] = useState('')
   const [shareError, setShareError] = useState('')
@@ -93,18 +93,28 @@ export default function App() {
   const [linkMessage, setLinkMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [spokenError, setSpokenError] = useState('')
 
+  const [incomingDownload, setIncomingDownload] = useState(false)
+  const [pendingDownload, setPendingDownload] = useState(false)
+  const [aiNotice, setAiNotice] = useState('')
+
   useEffect(() => {
+    const ai = readAiLink()
     const code = readSharedCode()
-    if (!code) return
-    decodeSettings(code).then(shared => {
+    if (!ai && !code) return
+    const opened = ai ? Promise.resolve().then(() => decodeAiDesign(ai.json)) : decodeSettings(code!)
+    opened.then(shared => {
+      const download = Boolean(ai?.download)
       // A first-time visitor has nothing to lose, so open the shared design straight away.
-      if (initial.firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setLinkMessage({ ok: true, text: `Opened the shared design for ${shared.name}. Your changes save on this browser.` }) }
-      else setIncoming(shared)
-    }, () => { clearSharedCode(); setLinkMessage({ ok: false, text: 'This design link is damaged or incomplete, so your current design was kept. Ask for the link again.' }) })
+      if (initial.firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setPendingDownload(download); setLinkMessage({ ok: true, text: `Opened the ${ai ? '' : 'shared '}design for ${shared.name}.${download ? ' Your image is downloading; if it does not start, press Download.' : ''} Your changes save on this browser.` }) }
+      else { setIncoming(shared); setIncomingDownload(download) }
+    }, error => {
+      clearSharedCode()
+      setLinkMessage({ ok: false, text: ai ? `This AI link could not be opened: ${error instanceof Error ? error.message : 'the design is not valid.'} Your current design was kept. Send this message back to the AI so it can fix the link.` : 'This design link is damaged or incomplete, so your current design was kept. Ask for the link again.' })
+    })
   }, [initial.firstVisit])
 
   function acceptIncoming(use: boolean) {
-    if (use && incoming) { setSettings(incoming); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}. Use Undo to return to your previous design.` }) }
+    if (use && incoming) { setSettings(incoming); setPendingDownload(incomingDownload); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}.${incomingDownload ? ' Your image is downloading.' : ''} Use Undo to return to your previous design.` }) }
     setIncoming(null); clearSharedCode()
   }
   async function copyLink() {
@@ -176,6 +186,17 @@ export default function App() {
     try { await downloadProfile(result.settings, result.rows); setDownloaded(true) }
     catch (error) { setExportError(error instanceof Error ? error.message : 'The image could not be downloaded. Please try again.') }
     finally { setExporting(false) }
+  }
+  // An AI link with "download" exports once the opened design has rendered.
+  useEffect(() => {
+    if (!pendingDownload) return
+    setPendingDownload(false)
+    if (result.settings) download()
+  }, [pendingDownload, result.settings])
+  async function copyAiRequest() {
+    const request = `Make our masjid's WhatsApp prayer-times image from the attached timetable photo. Follow the instructions at ${new URL('llms.txt', location.href.split('#')[0])} and reply with the link.`
+    try { await navigator.clipboard.writeText(request); setAiNotice('Request copied. Paste it into your AI chat and attach the timetable photo.') }
+    catch { window.prompt('Copy this request into your AI chat:', request) }
   }
   function useLocation() {
     setLocationNotice(''); setLocationError('')
@@ -390,6 +411,11 @@ export default function App() {
             <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" list="timezones" autoComplete="off" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><datalist id="timezones">{Intl.supportedValuesOf('timeZone').map(zone => <option key={zone} value={zone} />)}</datalist><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
+          <section className="editor-section">
+            <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Have a timetable photo? Send it to ChatGPT, Claude, Gemini or another AI with this request. It replies with a link that opens your design and downloads the image.</p></div></div>
+            <div className="share-actions"><Button variant="outline" onClick={copyAiRequest}><Sparkles data-icon="inline-start" />Copy request for AI</Button></div>
+            <p className="share-status" role="status">{aiNotice}</p>
+          </section>
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="share-heading">Share or back up</h2><p>Changes save on this browser automatically. To send this design or keep a copy, use a link or a settings file.</p></div></div>
             <div className="share-actions">

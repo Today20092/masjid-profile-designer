@@ -30,6 +30,14 @@ Download creates a square 1080px PNG with all essential content inside a circle.
 
 The chat-list avatar is too small to read the full timetable. Open the group photo for the details. Fewer rows, one language, and a short masjid name leave more room for readable text.
 
+## Making a design with an AI
+
+If you have a photo of your timetable, press **Copy request for AI**, paste the request into ChatGPT, Claude, Gemini or another AI that can read web pages, and attach the photo. The AI reads the site's [instructions for AI assistants](../public/llms.txt) and replies with a link. Opening it loads the design and downloads the image; you can keep editing on the page.
+
+If you already have a design saved in this browser, the page asks before replacing it, and Undo brings yours back. If the AI made a mistake, the page shows what is wrong; paste that message back to the AI for a corrected link. Check the times against your timetable before you post the image.
+
+The design travels after the `#` in the link, which browsers do not send to the website. The photo goes only to the AI you chose.
+
 ## Saved settings and privacy
 
 The app stores settings in this browser on this device. Clearing website data removes them. Private browsing or blocked storage can prevent saving; the editor reports this. A different phone or browser starts with its own settings.
