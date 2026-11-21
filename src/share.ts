@@ -20,14 +20,16 @@ export async function decodeSettings(code: string) {
 
 export const readSharedCode = () => new URLSearchParams(location.hash.slice(1)).get('s')
 
-// AI link: #download&json=<JSON>. json= runs to the end of the fragment, so stray & or # inside the JSON still parse.
+// AI link: #download&json=<JSON> (or #download=2&json=… for a 2× image). json= runs to the end of the fragment, so stray & or # inside the JSON still parse.
 export function readAiLink(hash = location.hash) {
   const at = hash.indexOf('json=')
   if (at < 0) return null
   const text = hash.slice(at + 5)
   let json = text
   try { json = decodeURIComponent(text) } catch { /* the AI left raw % signs: use the text as written */ }
-  return { json, download: /(^#|&)download(=1)?&$/.test(hash.slice(0, at)) }
+  // download=2 or download=3 exports at 2160px or 3240px instead of 1080px.
+  const flag = /(?:^#|&)download(?:=([123]))?&$/.exec(hash.slice(0, at))
+  return { json, download: Boolean(flag), scale: Number(flag?.[1] || 1) }
 }
 
 export function decodeAiDesign(json: string) {

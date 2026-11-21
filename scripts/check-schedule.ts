@@ -97,3 +97,14 @@ assert.deepEqual(getDisplayRows(jumuah).filter(row => row.en.startsWith('Jumu'))
 jumuah.customRows[0].enabled = false
 assert.equal(getDisplayRows(jumuah).find(row => row.id === 'jumuah')!.en, 'Jumu‘ah')
 console.log('Schedule checks passed')
+{
+  // Pasted partial settings keep everything else from the current design.
+  const { settingsFromPatch } = await import('../src/schedule.ts')
+  const current = { ...createDefaults(), name: 'Masjid Noor', location: 'Here' }
+  const next = settingsFromPatch({ prayers: { fajr: { fixed: '05:10' } } }, current)
+  assert.equal(next.name, 'Masjid Noor')
+  assert.equal(next.location, 'Here')
+  assert.equal(next.prayers.fajr.fixed, '05:10')
+  assert.equal(next.prayers.isha.fixed, current.prayers.isha.fixed)
+  console.log('Pasted settings merge ok')
+}

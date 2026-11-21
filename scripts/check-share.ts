@@ -44,3 +44,7 @@ assert.throws(() => decodeAiDesign('{"name":"A","prayers":{"tahajjud":{}}}'), /U
 assert.throws(() => decodeAiDesign('{"name":"A"'), /not valid JSON/)
 assert.deepEqual(decodeAiDesign(JSON.stringify(createDefaults())), validateSettings(createDefaults()), 'full settings pass through unchanged')
 console.log('AI links ok')
+assert.equal(readAiLink('#download&json={}')!.scale, 1)
+assert.deepEqual([readAiLink('#download=3&json={}')!.scale, readAiLink('#download=3&json={}')!.download], [3, true])
+assert.equal(readAiLink('#download=9&json={}')!.download, false, 'unsupported sizes are ignored')
+console.log('export scale ok')

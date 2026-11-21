@@ -261,18 +261,16 @@ body:has(input:focus) .mobile-download { display: none; }
 .start-link { height: auto; min-height: 24px; padding: 0; font-size: 0.875rem; white-space: normal; text-align: left; }
 .share-choice { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-actions > * { flex: 1 1 160px; }
 .share-actions [data-slot="button"] { min-height: 44px; }
 .share-status { margin: 10px 0 0; min-height: 1lh; font-size: 0.8125rem; color: var(--muted-foreground); }
 .share-error { color: var(--destructive); }
 .date-range { gap: 8px; }
 .optional-label { font-weight: 400; color: var(--muted-foreground); }
-.end-date-field { position: relative; }
-.clear-end-date { position: absolute; top: -4px; right: 0; height: auto; min-height: 24px; padding: 0 2px; font-size: 0.75rem; }
+.date-range .clear-end-date { align-self: flex-start; width: fit-content; margin-left: -2px; height: auto; min-height: 32px; padding: 0 2px; font-size: 0.75rem; }
 .settings-text { margin-top: 12px; }
-.settings-text [data-slot="accordion-content"] { display: grid; gap: 10px; }
-.settings-textarea { width: 100%; min-height: 240px; resize: vertical; border: 1px solid var(--input); border-radius: 8px; background: transparent; padding: 8px 10px; font: 0.75rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--foreground); }
-.settings-textarea:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); }
-.settings-textarea[aria-invalid="true"] { border-color: var(--destructive); }
+.settings-text .share-actions { margin-top: 10px; }
+.settings-textarea { height: 280px; resize: vertical; field-sizing: fixed; font: 0.75rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; }
 /* Two date inputs need ~150px each; stack them below that so the native picker text never clips. */
 @media (max-width: 339px) { .date-range .two-fields { grid-template-columns: minmax(0, 1fr); } }
 .theme-options { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
@@ -288,3 +286,10 @@ body:has(input:focus) .mobile-download { display: none; }
 .theme-swatch, .colour-dot, .colour-preview, [data-slot="color-picker-area"], [data-slot="color-picker-hue"], [data-slot="color-picker-swatch"] { forced-color-adjust: none; }
 /* Below 900px the mobile status bar already announces settings errors. */
 @media (max-width: 899px) { .error-announcer { display: none; } }
+.download-area .export-scale-label { margin-top: 18px; color: var(--foreground); font-weight: 600; }
+.export-scale { max-width: 220px; margin: 8px auto 0; }
+.export-scale [data-slot="toggle-group-item"] { min-height: 44px; }
+.share-status:empty { min-height: 0; margin: 0; }
+.prayer-main > .remove-row { grid-column: 3; }
+.text-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.date-range > [data-slot="field-legend"] { font-weight: 650; font-size: 0.8125rem; }

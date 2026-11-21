@@ -19,6 +19,7 @@ Do not invent times. If a time is unreadable, leave that prayer out and tell the
 - Percent-encode the JSON, as JavaScript's encodeURIComponent does, so the link stays clickable in chat. Compact JSON without spaces also works when you cannot encode it.
 - `json=` must be the last part of the link.
 - Leave out `download&` to open the design for editing without downloading the image.
+- For a sharper image, use `download=2&` (2160 × 2160 px) or `download=3&` (3240 × 3240 px). Plain `download&` gives 1080 × 1080 px, which is right for WhatsApp.
 - Everything after `#` stays in the user's browser; it is never sent to a server.
 - If the link has a mistake, the page shows the reason. The user may paste that message back to you: fix the JSON and send a new link.
 

@@ -82,11 +82,13 @@ function relativeWording(minutes: number, language: Settings['language']) {
 export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
   settings.theme === 'custom' ? derivePalette(settings.customColor, settings.customAccent) : ARTWORK_THEMES[settings.theme]
 
-function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[]) {
+function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[], resolution = 1) {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Your browser could not create the profile image. Please try another browser.')
-  canvas.width = SIZE
-  canvas.height = SIZE
+  canvas.width = SIZE * resolution
+  canvas.height = SIZE * resolution
+  // Drawing stays in 1080-unit coordinates; the transform renders it at 2× or 3× resolution.
+  ctx.setTransform(resolution, 0, 0, resolution, 0, 0)
   delete canvas.dataset.fitWarning
   const theme = themeColors(settings)
   const gradient = ctx.createRadialGradient(410, 240, 30, 540, 540, 760)
@@ -233,15 +235,15 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
   </>
 }
 
-export async function downloadProfile(settings: Settings, rows: DisplayRow[]): Promise<void> {
+export async function downloadProfile(settings: Settings, rows: DisplayRow[], scale = 1): Promise<void> {
   await loadFonts()
   const canvas = document.createElement('canvas')
-  drawProfile(canvas, settings, rows)
+  drawProfile(canvas, settings, rows, scale)
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('The PNG could not be created. Please try again.')), 'image/png'))
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = `masjid-profile-${settings.date}.png`
+  anchor.download = `masjid-profile-${settings.date}${scale > 1 ? `-${SIZE * scale}px` : ''}.png`
   document.body.append(anchor)
   anchor.click()
   anchor.remove()
