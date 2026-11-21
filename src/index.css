@@ -111,7 +111,6 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .whatsapp-example > div:nth-last-child(2) { min-width: 0; }
 .whatsapp-example strong { display: block; overflow-wrap: anywhere; font-size: 0.8125rem; font-weight: 750; }
 .whatsapp-example p { margin: 5px 0 0; color: var(--muted-foreground); font-size: 0.75rem; }
-.example-check { margin-left: auto; width: 16px; height: 16px; flex-shrink: 0; color: var(--gold); }
 .download-area { padding-top: 24px; text-align: center; }
 .download-button { display: none; width: 100%; min-height: 52px; }
 .download-area p { margin: 11px 0 0; color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.6; }
@@ -189,13 +188,12 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .location-status { color: var(--primary); font-size: 0.75rem; line-height: 1.8; }
 .editor-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .edit-actions { display: flex; gap: 4px; }
-.history-help { margin: -6px 0 0; color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.6; }
+.dates-passed { margin: 0; font-size: 0.8125rem; }
 .save-status { display: flex; gap: 6px; align-items: center; color: var(--muted-foreground); font-size: 0.75rem; }
 .save-status svg { width: 13px; height: 13px; }
 .editor-footer [data-slot="button"] { font-size: 0.6875rem; }
 .notices { display: flex; flex-direction: column; gap: 12px; }
 .storage-acknowledge { margin-top: 12px; white-space: normal; height: auto; width: 100%; }
-.site-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 0.6875rem; }
 /* Keep fixed controls aligned with the page when Radix reserves a hidden scrollbar. */
 .mobile-download { position: fixed; bottom: 0; left: 0; right: var(--removed-body-scroll-bar-size, 0px); padding: 10px 20px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--background); display: flex; flex-direction: column; gap: 6px; z-index: 20; }
 .mobile-actions { display: flex; gap: 6px; width: 100%; }
@@ -230,7 +228,6 @@ body:has(input:focus) .mobile-download { display: none; }
   .mobile-download { display: none; }
   .mobile-edit-preview { display: none; }
   [data-preview-pinned="true"] .editor-column [id] { scroll-margin-top: 20px; }
-  .site-footer { flex-direction: row; justify-content: space-between; }
 }
 @media (min-width: 1050px) {
   .intro { text-align: left; margin-bottom: 32px; }

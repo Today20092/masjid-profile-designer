@@ -189,8 +189,8 @@ export default function App() {
     }, () => { setLocating(false); setLocationError('Location could not be accessed. Allow location in your browser or enter coordinates below.') }, { timeout: 15000, maximumAge: 300000 })
   }
   function reset() {
-    if (!window.confirm('Reset this design and replace your saved settings with the Masjid Abu Bakr starting values?')) return
     setSettings(createDefaults()); setStorageBlocked(false); setStorageNotice(''); setDownloaded(false); setExportError('')
+    setEditNotice('Starting design restored. Undo brings yours back.')
   }
   function undo() {
     dispatch({ type: 'undo' }); setDownloaded(false); setExportError(''); setEditNotice('Last edit undone.')
@@ -201,6 +201,18 @@ export default function App() {
   function togglePreview() {
     setPreviewPinned(current => !current)
     if (!previewPinned && (document.querySelector('.editor-column')?.getBoundingClientRect().top || 0) > 0) requestAnimationFrame(() => document.getElementById('editing-preview')?.scrollIntoView({ block: 'start' }))
+  }
+
+  const today = (() => { try { return new Intl.DateTimeFormat('en-CA', { timeZone: settings.timezone }).format(new Date()) } catch { return '' } })()
+  const datesPassed = Boolean(today) && (settings.endDate || settings.date) < today
+  function moveDatesToToday() {
+    const span = settings.endDate ? Date.parse(settings.endDate) - Date.parse(settings.date) : 0
+    setDownloaded(false); setExportError('')
+    setSettings(current => ({ ...current, date: today, endDate: current.endDate ? new Date(Date.parse(today) + span).toISOString().slice(0, 10) : '' }))
+  }
+  function removeCustomRow(row: CustomRow) {
+    update('customRows', settings.customRows.filter(item => item.id !== row.id))
+    setEditNotice(`${row.en || 'Custom row'} removed. Undo brings it back.`)
   }
 
   const errorPrayer = PRAYERS.find(item => result.error.startsWith(`${item.en} fixed time`))
@@ -229,7 +241,7 @@ export default function App() {
           {fitWarning && <p className="fit-warning" role="status">Some text was reduced to fit. Shorten labels, show fewer rows, or use one time column for clearer text.</p>}
           <div className="whatsapp-example">
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
-            <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div><Check className="example-check" aria-hidden="true" />
+            <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
           </div><Separator />
           <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
@@ -254,7 +266,7 @@ export default function App() {
             {exportError && <Alert variant="destructive"><CircleHelp /><AlertTitle>Download did not finish</AlertTitle><AlertDescription>{exportError}</AlertDescription></Alert>}
           </div>}
           <section className="editor-section">
-            <div className="editor-heading"><div><h2 id="identity-heading">Your masjid</h2><p>A familiar name for your community.</p></div></div>
+            <div className="editor-heading"><div><h2 id="identity-heading">Your masjid</h2></div></div>
             <FieldGroup>
               <Field data-invalid={!settings.name.trim()}><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" required aria-invalid={!settings.name.trim()} aria-describedby={!settings.name.trim() ? 'name-error' : undefined} maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} />{!settings.name.trim() && <FieldError id="name-error">Enter your masjid’s name.</FieldError>}</Field>
               <Field><FieldLabel htmlFor="name-ar">Name in Arabic</FieldLabel><Input id="name-ar" lang="ar" dir="rtl" maxLength={64} value={settings.nameAr} onChange={e => update('nameAr', e.target.value)} /></Field>
@@ -266,12 +278,13 @@ export default function App() {
                   </div>
                   {errorTarget === 'date' && <FieldError id="date-error">{result.error}</FieldError>}
                   {errorTarget === 'end-date' && <FieldError id="end-date-error">{result.error}</FieldError>}
+                  {datesPassed && <p className="dates-passed" role="status">These dates have passed. <Button variant="link" className="start-link" onClick={moveDatesToToday}>Start from today{settings.endDate ? ', same length' : ''}</Button></p>}
                   <FieldDescription id="date-range-help">Add an end date to show a range like “8–15 November”. Prayer times are calculated for the start date.</FieldDescription>
                 </FieldSet>
             </FieldGroup>
           </section>
           <section className="editor-section">
-            <div className="editor-heading"><div><h2 id="times-heading" tabIndex={-1}>Prayer times</h2><p>Your iqamah. Your community’s rhythm.</p></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
+            <div className="editor-heading"><div><h2 id="times-heading" tabIndex={-1}>Prayer times</h2></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
             <p className="section-description">Edit iqamah times below. Open a prayer’s options for delays and adhan adjustments.</p>
             <div className="calculation-summary"><p>Adhan is calculated. Confirm the location and method, and use your masjid’s iqamah times.</p><a className={buttonVariants({ variant: 'link' })} href="#calculation-settings" onClick={() => setCalculationOpen(true)}>Review calculation settings</a></div>
             <FieldSet className="prayer-rows"><FieldLegend className="sr-only">Prayers to display</FieldLegend>
@@ -282,7 +295,7 @@ export default function App() {
                   <div className="prayer-main">
                     <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${item.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => prayer(item.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${item.id}`}><span className="prayer-name">{item.en}<span lang="ar" dir="rtl" className="prayer-arabic">{item.ar}</span></span></FieldLabel></Field>
                     {row.enabled && <div className="compact-value">
-                      {item.id === 'sunrise' ? <output aria-label="Calculated sunrise">{calculated?.adhan || '—'}</output> : row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`} className="sr-only">{item.en} iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" required aria-invalid={!row.fixed} aria-describedby={!row.fixed ? `time-${item.id}-error` : undefined} value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} />{!row.fixed && <FieldError id={`time-${item.id}-error`}>Enter an iqamah time.</FieldError>}</Field> : <><NumberField id={`delay-${item.id}`} label={`${item.en} minutes after adhan`} compact min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} /><span className="delay-unit">min after adhan</span></>}
+                      {item.id === 'sunrise' ? <output aria-label="Calculated sunrise">{calculated?.adhan || '—'}</output> : row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`} className="sr-only">{item.en} iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" required aria-invalid={!row.fixed} aria-describedby={!row.fixed ? `time-${item.id}-error` : undefined} value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} />{!row.fixed && <FieldError id={`time-${item.id}-error`}>Enter an iqamah time.</FieldError>}{row.fixed && item.id !== 'jumuah' && calculated?.adhan && <span className="delay-unit">Adhan {calculated.adhan}</span>}</Field> : <><NumberField id={`delay-${item.id}`} label={`${item.en} minutes after adhan`} compact min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} /><span className="delay-unit">min after adhan</span></>}
                     </div>}
                     {row.enabled && item.id !== 'jumuah' && <AccordionTrigger className="prayer-options" aria-label={`${item.en} options`} title={`${item.en} options`}><span className="sr-only">{item.en} options</span></AccordionTrigger>}
                   </div>
@@ -295,7 +308,7 @@ export default function App() {
                 </AccordionItem></Accordion>
               })}
               {settings.customRows.map(row => <div className="prayer-editor custom-prayer" key={row.id}>
-                <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${row.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => custom(row.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${row.id}`}>{row.en || 'Custom row'}</FieldLabel><Button variant="ghost" size="icon" aria-label={`Remove ${row.en || 'custom row'}`} onClick={() => update('customRows', settings.customRows.filter(item => item.id !== row.id))}><Trash2 /></Button></Field>
+                <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${row.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => custom(row.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${row.id}`}>{row.en || 'Custom row'}</FieldLabel><Button variant="ghost" size="icon" aria-label={`Remove ${row.en || 'custom row'}`} onClick={() => removeCustomRow(row)}><Trash2 /></Button></Field>
                 <FieldGroup className="prayer-controls"><FieldGroup className="two-fields"><Field><FieldLabel htmlFor={`en-${row.id}`}>English label</FieldLabel><Input id={`en-${row.id}`} maxLength={30} value={row.en} onChange={e => custom(row.id, { en: e.target.value })} /></Field><Field><FieldLabel htmlFor={`ar-${row.id}`}>Arabic label</FieldLabel><Input id={`ar-${row.id}`} lang="ar" dir="rtl" maxLength={30} value={row.ar} onChange={e => custom(row.id, { ar: e.target.value })} /></Field></FieldGroup><Field><FieldLabel htmlFor={`custom-time-${row.id}`}>Time</FieldLabel><Input id={`custom-time-${row.id}`} type="time" required aria-invalid={!row.time} aria-describedby={!row.time ? `custom-time-${row.id}-error` : undefined} value={row.time} onChange={e => custom(row.id, { time: e.target.value })} />{!row.time && <FieldError id={`custom-time-${row.id}-error`}>Enter a time for this row.</FieldError>}</Field></FieldGroup>
               </div>)}
             </FieldSet>
@@ -308,7 +321,7 @@ export default function App() {
               {settings.theme === 'custom' && <FieldSet className="custom-colours"><FieldLegend variant="label">Your colours</FieldLegend>
                 <ToggleGroup variant="outline" className="segmented" aria-label="Colour to edit" value={[editingColour]} onValueChange={([value]) => { if (value === 'main' || value === 'accent') setEditingColour(value) }}>
                   <ToggleGroupItem value="main"><span className="colour-dot" style={{ background: settings.customColor }} aria-hidden="true" />Main colour</ToggleGroupItem>
-                  <ToggleGroupItem value="accent"><span className="colour-dot" style={{ background: customPalette.gold }} aria-hidden="true" />Accent{settings.customAccent ? '' : ' (auto)'}</ToggleGroupItem>
+                  <ToggleGroupItem value="accent"><span className="colour-dot" style={{ background: customPalette.gold }} aria-hidden="true" />Accent</ToggleGroupItem>
                 </ToggleGroup>
                 <ColorPicker key={editingColour} className="colour-picker" aria-label={editingColour === 'main' ? 'Main colour' : 'Accent colour'}
                   value={editingColour === 'main' ? settings.customColor : settings.customAccent || customPalette.gold}
@@ -334,7 +347,7 @@ export default function App() {
             <Button variant="outline" disabled={locating} onClick={useLocation}>{locating ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <LocateFixed data-icon="inline-start" />}{locating ? 'Finding your location…' : 'Use my device location'}</Button>
             {locationNotice && <p role="status" className="location-status">{locationNotice}</p>}{locationError && <FieldError>{locationError}</FieldError>}
             <FieldGroup className="two-fields"><NumberField id="latitude" label="Latitude" min={-90} max={90} step="any" value={settings.latitude} onChange={value => update('latitude', value)} /><NumberField id="longitude" label="Longitude" min={-180} max={180} step="any" value={settings.longitude} onChange={value => update('longitude', value)} /></FieldGroup>
-            <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
+            <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" list="timezones" autoComplete="off" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><datalist id="timezones">{Intl.supportedValuesOf('timeZone').map(zone => <option key={zone} value={zone} />)}</datalist><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
           <section className="editor-section">
@@ -347,12 +360,10 @@ export default function App() {
             </div>
             <p className={shareError ? 'share-status share-error' : 'share-status'} role="status">{shareError || shareNotice}</p>
           </section>
-          <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo}>Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
-          <p className="history-help">Keyboard: Ctrl/Cmd+Z to undo; Ctrl/Cmd+Shift+Z to redo. Text fields keep their normal editing shortcuts.</p>
+          <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo} title="Undo (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
         </section>
       </div>
       <p className="sr-only error-announcer" aria-live="polite">{spokenError}</p>
-      <footer className="site-footer"><span>Made for the moments we come together.</span><span>No account. No uploads. Just your community.</span></footer>
     </main>
     <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button className="undo-button" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? 'Preparing a 1080 × 1080 PNG…' : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? 'Saved on this browser · 1080 × 1080 PNG' : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
   </>
