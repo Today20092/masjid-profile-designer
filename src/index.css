@@ -134,7 +134,7 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .section-description { color: var(--muted-foreground); font-size: 0.875rem; line-height: 1.6; margin: -9px 0 16px; }
 .calculation-summary { padding-bottom: 16px; }
 .calculation-summary p { margin: 0; font-size: 0.875rem; line-height: 1.6; }
-.calculation-summary [data-slot="button"] { padding-inline: 0; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; }
+.calculation-summary a { padding-inline: 0; font-size: 0.875rem; text-decoration: underline; text-underline-offset: 3px; }
 .prayer-rows { gap: 0; }
 .prayer-editor { border-top: 1px solid var(--border); padding: 3px 0; }
 .prayer-heading { gap: 10px; min-height: 50px; }
@@ -147,7 +147,8 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .prayer-main .prayer-heading { min-width: 0; gap: 7px; }
 .prayer-main .prayer-heading > [data-slot="field-label"] { min-width: 0; gap: 0; }
 .prayer-name { display: flex; flex-direction: column; gap: 0; line-height: 1.3; }
-.prayer-main .prayer-arabic { font-size: 1rem; line-height: 1.35; }
+.prayer-main .prayer-arabic { align-self: flex-start; font-size: 1rem; line-height: 1.35; }
+.prayer-main input { text-align: center; }
 .compact-value { min-width: 0; }
 .compact-value [data-slot="input"] { padding-inline: 7px; }
 .compact-value output { font-size: 0.8125rem; }
@@ -199,7 +200,7 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .mobile-actions { display: flex; gap: 6px; width: 100%; }
 .mobile-actions [data-slot="button"] { min-height: 48px; padding-inline: 10px; font-size: 0.875rem; }
 .mobile-actions button { flex: 1; }
-.mobile-actions .undo-button { flex: 0; padding-inline: 8px; font-size: 0.75rem; }
+.mobile-actions button:last-child { flex: 1.7; }
 .mobile-feedback { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; font-size: 0.75rem; line-height: 1.5; color: var(--muted-foreground); }
 .mobile-feedback p { margin: 0; }
 .mobile-feedback [data-slot="button"] { padding-inline: 8px; flex-shrink: 0; }
