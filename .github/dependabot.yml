@@ -1,0 +1,26 @@
+# One monthly PR per ecosystem for all minor and patch updates (one CI run, no
+# lockfile conflicts between PRs); majors come one PR each. The 7-day cooldown
+# skips fresh releases; security updates are not delayed. Merged by hand.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
