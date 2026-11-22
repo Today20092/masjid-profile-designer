@@ -17,6 +17,7 @@ import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, 
 import { createDefaults, designForAi, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile, renderProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
+import { PhotoPalettePicker } from './PhotoPalettePicker'
 import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
 
 function restore() {
@@ -436,6 +437,13 @@ export default function App() {
             <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2></div></div>
             <FieldGroup>
               <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[settings.theme]} onValueChange={([value]) => { const theme = [...THEME_IDS, 'custom' as const].find(theme => theme === value); if (theme) update('theme', theme) }}>{THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch" style={{ color: ARTWORK_THEMES[theme].gold, background: ARTWORK_THEMES[theme].background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}<ToggleGroupItem value="custom" className="theme-option"><span className="theme-swatch" style={{ color: customPalette.gold, background: customPalette.background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>Custom</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem></ToggleGroup></Field>
+              <PhotoPalettePicker
+                isApplied={({ main, accent }) => settings.theme === 'custom' && settings.customColor === main && settings.customAccent === accent}
+                onApply={({ main, accent }) => {
+                  setSaved(false); setDownloaded(false); setExportError('')
+                  setSettings(current => ({ ...current, theme: 'custom', customColor: main, customAccent: accent }))
+                }}
+              />
               {settings.theme === 'custom' && <FieldSet className="custom-colours"><FieldLegend variant="label">Your colours</FieldLegend>
                 <ToggleGroup variant="outline" className="segmented" aria-label="Colour to edit" value={[editingColour]} onValueChange={([value]) => { if (value === 'main' || value === 'accent') setEditingColour(value) }}>
                   <ToggleGroupItem value="main"><span className="colour-dot" style={{ background: settings.customColor }} aria-hidden="true" />Main colour</ToggleGroupItem>
