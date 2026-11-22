@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
 import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -81,7 +82,7 @@ export default function App() {
   const [calculationOpen, setCalculationOpen] = useState(false)
   const [editNotice, setEditNotice] = useState('')
   const [previewPinned, setPreviewPinned] = useState(false)
-  const [fitWarning, setFitWarning] = useState(false)
+  const [fitWarning, setFitWarning] = useState('')
   const [editingColour, setEditingColour] = useState<'main' | 'accent'>('main')
   const customPalette = useMemo(() => derivePalette(settings.customColor, settings.customAccent), [settings.customColor, settings.customAccent])
   const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode() && !readAiLink())
@@ -174,6 +175,11 @@ export default function App() {
     setSaved(false); setDownloaded(false); setExportError('')
     setSettings(current => ({ ...current, [key]: value }), document.activeElement instanceof HTMLInputElement ? document.activeElement.id : undefined)
   }
+  // Text size and table width are one choice: larger text needs the wider table.
+  function setTextSize(textSize: Settings['textSize']) {
+    setSaved(false); setDownloaded(false); setExportError('')
+    setSettings(current => ({ ...current, textSize, tableWidth: textSize === 'standard' ? 'standard' : 'wide' }))
+  }
   function prayer(id: PrayerId, patch: Partial<PrayerSetting>) {
     setSaved(false); setDownloaded(false)
     setSettings(current => ({ ...current, prayers: { ...current.prayers, [id]: { ...current.prayers[id], ...patch } } }), document.activeElement instanceof HTMLInputElement ? document.activeElement.id : undefined)
@@ -181,6 +187,8 @@ export default function App() {
   function custom(id: string, patch: Partial<CustomRow>) {
     update('customRows', settings.customRows.map(row => row.id === id ? { ...row, ...patch } : row))
   }
+  const sample = createDefaults()
+  const isSample = settings.name === sample.name && settings.location === sample.location
   const numberedJumuah = settings.customRows.some(row => row.enabled && isExtraJumuah(row.en))
   const enabledCount = PRAYERS.filter(item => settings.prayers[item.id].enabled).length + settings.customRows.filter(row => row.enabled).length
 
@@ -297,7 +305,7 @@ export default function App() {
       <span className="privacy-note"><LockKeyhole aria-hidden="true" /><span>Made on your device</span></span>
     </header>
     <main id="main" className="studio-shell" data-preview-pinned={previewPinned} onBlurCapture={() => dispatch({ type: 'end-group' })}>
-      <section className="intro"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={buttonVariants({ variant: 'outline' })} href="#times-heading">Edit times</a><a className={buttonVariants({ variant: 'outline' })} href="#appearance-heading">Choose design</a></nav></section>
+      <section className="intro"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#times-heading">Edit times</a><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#appearance-heading">Choose design</a></nav></section>
       <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title"><div className="preview-sticky">
           <div className="section-topline"><h2 id="preview-title" tabIndex={-1}>Your profile image</h2><span className="live-label"><span />Live preview</span></div>
@@ -305,7 +313,7 @@ export default function App() {
             {result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} className="main-artwork" onFitWarning={setFitWarning} /> : <div className="preview-unavailable"><CircleHelp aria-hidden="true" /><p>Complete your settings<br />to see your design.</p></div>}
             <span className="crop-note">Designed to fit the circle</span>
           </div>
-          {fitWarning && <p className="fit-warning" role="status">Some text was reduced to fit. Shorten labels, show fewer rows, or use one time column for clearer text.</p>}
+          {fitWarning && <p className="fit-warning" role="status">“{fitWarning}” was shrunk to fit. Shorten it, show fewer rows, or use one time column for clearer text.</p>}
           <div className="whatsapp-example">
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
@@ -336,7 +344,7 @@ export default function App() {
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="identity-heading">Your masjid</h2></div></div>
             <FieldGroup>
-              <Field data-invalid={!settings.name.trim()}><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" required aria-invalid={!settings.name.trim()} aria-describedby={!settings.name.trim() ? 'name-error' : undefined} maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} />{!settings.name.trim() && <FieldError id="name-error">Enter your masjid’s name.</FieldError>}</Field>
+              <Field data-invalid={!settings.name.trim()}><FieldLabel htmlFor="name">Masjid name</FieldLabel><Input id="name" required aria-invalid={!settings.name.trim()} aria-describedby={!settings.name.trim() ? 'name-error' : undefined} maxLength={64} value={settings.name} onChange={e => update('name', e.target.value)} />{!settings.name.trim() && <FieldError id="name-error">Enter your masjid’s name.</FieldError>}{isSample && <FieldDescription>This is an example masjid. Replace it with yours before you download.</FieldDescription>}</Field>
               <Field><FieldLabel htmlFor="name-ar">Name in Arabic</FieldLabel><Input id="name-ar" lang="ar" dir="rtl" maxLength={64} value={settings.nameAr} onChange={e => update('nameAr', e.target.value)} /></Field>
               <Field><FieldLabel htmlFor="location">Location label</FieldLabel><Input id="location" aria-describedby="location-label-help" maxLength={70} value={settings.location} onChange={e => update('location', e.target.value)} /><FieldDescription id="location-label-help">Image text only. It does not change calculated times.</FieldDescription></Field>
                 <FieldSet className="date-range"><FieldLegend variant="label">Timetable dates</FieldLegend>
@@ -411,9 +419,8 @@ export default function App() {
                 {customPalette.adjusted && <p className="custom-adjusted" role="status">Text can’t be read clearly on this colour, so the background is {isLight(customPalette.background) ? 'lighter' : 'deeper'}{settings.customAccent ? '' : ' and your colour is used for the times and headings'}. For an exact background, pick a darker or lighter colour.</p>}
               </FieldSet>}
               <Field><FieldLabel id="language-label">Language</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="language-label" value={[settings.language]} onValueChange={([value]) => { if (value === 'en' || value === 'ar' || value === 'both') update('language', value) }}><ToggleGroupItem value="en">English</ToggleGroupItem><ToggleGroupItem value="ar" lang="ar">العربية</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field>
-              <Field><FieldLabel id="text-size-label">Prayer text size</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="text-size-label" value={[settings.textSize]} onValueChange={([value]) => { if (value === 'standard' || value === 'large' || value === 'extra') update('textSize', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="large">Large</ToggleGroupItem><ToggleGroupItem value="extra">Extra large</ToggleGroupItem></ToggleGroup><FieldDescription>Prayer names and times grow together. Long text fits automatically inside the circle.</FieldDescription></Field>
-              <Field><FieldLabel id="table-width-label">Table width</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="table-width-label" value={[settings.tableWidth]} onValueChange={([value]) => { if (value === 'standard' || value === 'wide') update('tableWidth', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="wide">Wide</ToggleGroupItem></ToggleGroup><FieldDescription>Wide gives names and times more room inside the circle. Combine it with a larger text size.</FieldDescription></Field>
-              <FieldGroup className="two-fields"><Choice id="time-display" label="Times to show" value={settings.timeDisplay} onChange={value => update('timeDisplay', value)} options={[{ value: 'iqamah', label: 'Iqamah only' }, { value: 'adhan', label: 'Adhan only' }, { value: 'both', label: 'Adhan + iqamah' }]} /><Field><FieldLabel id="clock-label">Clock format</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="clock-label" value={[settings.use24Hour ? '24' : '12']} onValueChange={([value]) => { if (value) update('use24Hour', value === '24') }}><ToggleGroupItem value="12">12 hour</ToggleGroupItem><ToggleGroupItem value="24">24 hour</ToggleGroupItem></ToggleGroup></Field></FieldGroup>
+              <Field><FieldLabel id="text-size-label">Text size</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="text-size-label" value={[settings.textSize]} onValueChange={([value]) => { if (value === 'standard' || value === 'large' || value === 'extra') setTextSize(value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="large">Large</ToggleGroupItem><ToggleGroupItem value="extra">Extra large</ToggleGroupItem></ToggleGroup><FieldDescription>Larger sizes spread the table across the circle and enlarge prayer names most. With many rows, space limits the largest size.</FieldDescription></Field>
+              <FieldGroup><Field><FieldLabel id="time-display-label">Times to show</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="time-display-label" value={[settings.timeDisplay]} onValueChange={([value]) => { if (value === 'iqamah' || value === 'adhan' || value === 'both') update('timeDisplay', value) }}><ToggleGroupItem value="iqamah">Iqamah</ToggleGroupItem><ToggleGroupItem value="adhan">Adhan</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field><Field><FieldLabel id="clock-label">Clock format</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="clock-label" value={[settings.use24Hour ? '24' : '12']} onValueChange={([value]) => { if (value) update('use24Hour', value === '24') }}><ToggleGroupItem value="12">12 hour</ToggleGroupItem><ToggleGroupItem value="24">24 hour</ToggleGroupItem></ToggleGroup></Field></FieldGroup>
               <Field><FieldLabel htmlFor="footer">A small note <span className="optional">Optional</span></FieldLabel><Input id="footer" maxLength={80} placeholder="Please arrive a few minutes early" value={settings.footer} onChange={e => update('footer', e.target.value)} /></Field>
             </FieldGroup>
           </section>
@@ -426,7 +433,7 @@ export default function App() {
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
           <section className="editor-section">
-            <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Paste this request into ChatGPT, Claude, Gemini, Grok or another AI, then attach your timetable photo or type the new times. It replies with a link that opens your design and downloads the image. If you already have a design, the AI updates it.</p></div></div>
+            <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Paste this request into ChatGPT, Claude, Gemini or Grok, then attach your timetable photo or type the times. You get back a link to your finished image.</p></div></div>
             <div className="share-actions"><Button variant="outline" onClick={copyAiRequest}><Sparkles data-icon="inline-start" />Copy request for AI</Button></div>
             <p className="share-status" role="status">{aiNotice}</p>
             <Accordion className="settings-text" value={textOpen ? ['text'] : []} onValueChange={value => openText(value.includes('text'))}><AccordionItem value="text"><AccordionTrigger><span className="advanced-title"><Braces aria-hidden="true" /><span>Edit as text<span>Paste or copy the settings</span></span></span></AccordionTrigger><AccordionContent>
@@ -447,11 +454,11 @@ export default function App() {
             </div>
             <p className={shareError ? 'share-status share-error' : 'share-status'} role="status">{shareError || shareNotice}</p>
           </section>
-          <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo} title="Undo (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
+          <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? (history.past.length ? 'Saved on this browser' : 'Changes save on this browser') : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo} title="Undo (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
         </section>
       </div>
       <p className="sr-only error-announcer" aria-live="polite">{spokenError}</p>
     </main>
-    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button size="lg" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? `Preparing a ${1080 * exportScale} × ${1080 * exportScale} PNG…` : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? `Saved on this browser · ${1080 * exportScale} × ${1080 * exportScale} PNG` : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
+    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button size="lg" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? `Preparing a ${1080 * exportScale} × ${1080 * exportScale} PNG…` : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? `${history.past.length ? 'Saved on this browser' : 'Changes save on this browser'} · ${1080 * exportScale} × ${1080 * exportScale} PNG` : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
   </>
 }
