@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
-import { createDefaults, designForAi, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
+import { createDefaults, designForAi, formatTimetable, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile, renderProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
 import { PhotoPalettePicker } from './PhotoPalettePicker'
@@ -77,6 +77,7 @@ export default function App() {
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
   const [downloaded, setDownloaded] = useState(false)
+  const [timetableCopy, setTimetableCopy] = useState<{ text: string; copied: boolean } | null>(null)
   const [locating, setLocating] = useState(false)
   const [locationNotice, setLocationNotice] = useState('')
   const [locationError, setLocationError] = useState('')
@@ -171,6 +172,19 @@ export default function App() {
       return { settings: valid, rows: getDisplayRows(valid), error: '' }
     } catch (error) { return { settings: null, rows: [], error: error instanceof Error ? error.message : 'Please check your settings.' } }
   }, [settings])
+
+  const timetableText = result.settings ? formatTimetable(result.settings, result.rows) : ''
+  const copyFeedback = timetableText && timetableCopy?.text === timetableText ? timetableCopy : null
+
+  async function copyTimetable() {
+    if (!timetableText) return
+    try {
+      await navigator.clipboard.writeText(timetableText)
+      setTimetableCopy({ text: timetableText, copied: true })
+    } catch {
+      setTimetableCopy({ text: timetableText, copied: false })
+    }
+  }
 
   // One polite live region for settings errors, a moment later so it doesn't talk over the field that gets focus next.
   useEffect(() => {
@@ -354,7 +368,11 @@ export default function App() {
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
           </div><Separator />
-          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button>{canShareImage && <Button size="lg" variant="outline" className="share-image-button" disabled={!result.settings || exporting} onClick={shareImage}><Share data-icon="inline-start" />Save to Photos or share</Button>}<p className="export-scale-label" id="export-scale-label">Image size</p><ToggleGroup variant="outline" className="segmented export-scale" aria-labelledby="export-scale-label" value={[String(exportScale)]} onValueChange={([value]) => { if (value) setExportScale(Number(value)) }}>{[1, 2, 3].map(scale => <ToggleGroupItem key={scale} value={String(scale)} aria-label={`${1080 * scale} pixels`}>{scale}×</ToggleGroupItem>)}</ToggleGroup><p>{1080 * exportScale} × {1080 * exportScale} px · {exportScale === 1 ? 'Ready for WhatsApp' : 'Sharper, for print or large screens'}</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
+          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button>{canShareImage && <Button size="lg" variant="outline" className="share-image-button" disabled={!result.settings || exporting} onClick={shareImage}><Share data-icon="inline-start" />Save to Photos or share</Button>}
+            <Button size="lg" type="button" variant="outline" className="copy-timetable-button" disabled={!timetableText} onClick={copyTimetable}><Copy data-icon="inline-start" aria-hidden="true" />Copy timetable</Button>
+            <p className="share-status" role="status">{copyFeedback && (copyFeedback.copied ? 'Timetable copied. Paste it into your group chat.' : 'Clipboard access is blocked. Select and copy the timetable below.')}</p>
+            {copyFeedback && !copyFeedback.copied && <Textarea aria-label="Timetable text" dir="auto" readOnly rows={5} value={timetableText} />}
+            <p className="export-scale-label" id="export-scale-label">Image size</p><ToggleGroup variant="outline" className="segmented export-scale" aria-labelledby="export-scale-label" value={[String(exportScale)]} onValueChange={([value]) => { if (value) setExportScale(Number(value)) }}>{[1, 2, 3].map(scale => <ToggleGroupItem key={scale} value={String(scale)} aria-label={`${1080 * scale} pixels`}>{scale}×</ToggleGroupItem>)}</ToggleGroup><p>{1080 * exportScale} × {1080 * exportScale} px · {exportScale === 1 ? 'Ready for WhatsApp' : 'Sharper, for print or large screens'}</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
           <p className="how-to">Have a timetable photo? <a className="text-link" href="#ai-heading">An AI can fill this in for you.</a></p>
         </div></section>
@@ -465,7 +483,7 @@ export default function App() {
               <Field><FieldLabel id="text-size-label">Text size</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="text-size-label" value={[settings.textSize]} onValueChange={([value]) => { if (value === 'standard' || value === 'large') update('textSize', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="large">Large</ToggleGroupItem></ToggleGroup><FieldDescription>Large spreads the table across the circle and uses the biggest text that fits.</FieldDescription></Field>
               <FieldGroup><Field><FieldLabel id="time-display-label">Times to show</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="time-display-label" value={[settings.timeDisplay]} onValueChange={([value]) => { if (value === 'iqamah' || value === 'adhan' || value === 'both') update('timeDisplay', value) }}><ToggleGroupItem value="iqamah">Iqamah</ToggleGroupItem><ToggleGroupItem value="adhan">Adhan</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field><Field><FieldLabel id="clock-label">Clock format</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="clock-label" value={[settings.use24Hour ? '24' : '12']} onValueChange={([value]) => { if (value) update('use24Hour', value === '24') }}><ToggleGroupItem value="12">12 hour</ToggleGroupItem><ToggleGroupItem value="24">24 hour</ToggleGroupItem></ToggleGroup></Field></FieldGroup>
               <Field data-invalid={Boolean(logoError)}><FieldLabel id="emblem-label">Top symbol</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="emblem-label" value={[settings.emblem]} onValueChange={([value]) => { if (value === 'star' || value === 'logo' || value === 'none') setEmblem(value) }}><ToggleGroupItem value="star">Star</ToggleGroupItem><ToggleGroupItem value="logo">Your logo</ToggleGroupItem><ToggleGroupItem value="none">None</ToggleGroupItem></ToggleGroup>
-                <input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={uploadLogo} />
+                <input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={uploadLogo} />
                 {settings.emblem === 'logo' && settings.logo && <div className="logo-choice"><img src={settings.logo} alt="Your logo" /><Button variant="outline" onClick={() => document.getElementById('logo-file')?.click()}><FileUp data-icon="inline-start" />Change logo</Button></div>}
                 {logoError ? <FieldError>{logoError}</FieldError> : <FieldDescription>Shown above the masjid name. A logo with a transparent background looks best.</FieldDescription>}</Field>
               <Field><FieldLabel htmlFor="footer">A small note <span className="optional">Optional</span></FieldLabel><Input id="footer" maxLength={80} placeholder="Please arrive a few minutes early" value={settings.footer} onChange={e => update('footer', e.target.value)} /></Field>

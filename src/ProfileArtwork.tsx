@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { DisplayRow, Settings, ThemeId } from './model'
 import { derivePalette, isLight } from './palette'
+import { relativeWording, timetableDateLabel } from './schedule'
 
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
   emerald: { name: 'Emerald', background: '#103e36', surface: '#194b41', ink: '#fff8e8', muted: '#b6c9bc', gold: '#e5bd7c' },
@@ -82,13 +83,6 @@ function clockText(ctx: CanvasRenderingContext2D, value: string, x: number, y: n
   const left = x - (digitsWidth + suffixWidth + size * 0.16) / 2
   text(ctx, clock[1], left + digitsWidth / 2, y, digitsWidth + 1, size, color, false, 700)
   text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.5, color, false, 700)
-}
-
-function relativeWording(minutes: number, language: Settings['language']) {
-  const english = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
-  const arabic = minutes === 1 ? 'دقيقة واحدة' : minutes === 2 ? 'دقيقتان' : `${minutes} ${minutes >= 3 && minutes <= 10 ? 'دقائق' : 'دقيقة'}`
-  if (language === 'both') return [{ value: `${english} after adhan`, arabic: false }, { value: `${arabic} بعد الأذان`, arabic: true }]
-  return language === 'ar' ? [{ value: arabic, arabic: true }, { value: 'بعد الأذان', arabic: true }] : [{ value: english, arabic: false }, { value: 'after adhan', arabic: false }]
 }
 
 export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
@@ -220,9 +214,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     })
   })
 
-  const date = new Date(`${settings.date}T12:00:00Z`)
-  const dateFormat = new Intl.DateTimeFormat(arabicOnly ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
-  const dateLabel = settings.endDate && settings.endDate !== settings.date ? dateFormat.formatRange(date, new Date(`${settings.endDate}T12:00:00Z`)) : dateFormat.format(date)
+  const dateLabel = timetableDateLabel(settings)
   text(ctx, dateLabel, 540, 914, 490, 28, theme.muted, arabicOnly)
   if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[\u0600-\u06ff]/.test(settings.footer))
 }
