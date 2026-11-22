@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { contrast, derivePalette, fromOklch, isHex, mix, toOklch } from '../src/palette.ts'
+import { suggestPhotoPalettes } from '../src/photo-palette.ts'
 
 const src = fs.readFileSync(new URL('../src/ProfileArtwork.tsx', import.meta.url), 'utf8')
 const themes = [...src.matchAll(/name: '(\w+)', background: '(#\w{6})', surface: '(#\w{6})', ink: '(#\w{6})', muted: '(#\w{6})', gold: '(#\w{6})'/g)]
@@ -38,3 +39,20 @@ console.log(`Custom palettes ok (${samples.length * 4} combinations, ${adjusted}
 for (const colour of samples) assert.equal(fromOklch(toOklch(colour)), colour, `OKLCH round-trip ${colour}`)
 assert.ok(isHex(fromOklch([0.7, 0.4, 150])), 'out-of-gamut chroma is reduced to a displayable colour')
 console.log(`OKLCH round-trip ok (${samples.length} colours); oklch(0.7 0.1 178) = ${fromOklch([0.7, 0.1, 178])}`)
+
+const photo = new Uint8ClampedArray([
+  31, 92, 74, 255, 31, 92, 74, 255, 230, 163, 84, 255,
+  255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+  255, 0, 0, 0,
+])
+const suggestions = suggestPhotoPalettes(photo)
+assert.ok(suggestions.length >= 2 && suggestions.length <= 3)
+assert.equal(suggestions[0].main, '#1f5c4a', 'prefer the brand colour over the neutral backdrop')
+assert.equal(suggestions[0].accent, '#e6a354')
+for (const { main, accent, palette, minimum } of suggestions) {
+  assert.ok(minimum >= 4.5)
+  assert.deepEqual(palette, derivePalette(main, accent), 'saved custom colours reproduce the suggestion')
+}
+assert.deepEqual(suggestPhotoPalettes(new Uint8ClampedArray([255, 0, 0, 0])), [])
+assert.equal(suggestPhotoPalettes(new Uint8ClampedArray([0, 0, 0, 255])).length, 1)
+console.log('Photo-derived palette checks passed')
