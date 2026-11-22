@@ -258,15 +258,20 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
   </>
 }
 
-export async function downloadProfile(settings: Settings, rows: DisplayRow[], scale = 1): Promise<void> {
+export async function renderProfile(settings: Settings, rows: DisplayRow[], scale = 1) {
   const [, logo] = await Promise.all([loadFonts(), loadLogo(settings)])
   const canvas = document.createElement('canvas')
   drawProfile(canvas, settings, rows, scale, logo)
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('The PNG could not be created. Please try again.')), 'image/png'))
-  const url = URL.createObjectURL(blob)
+  return new File([blob], `masjid-profile-${settings.date}${scale > 1 ? `-${SIZE * scale}px` : ''}.png`, { type: 'image/png' })
+}
+
+export async function downloadProfile(settings: Settings, rows: DisplayRow[], scale = 1): Promise<void> {
+  const file = await renderProfile(settings, rows, scale)
+  const url = URL.createObjectURL(file)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = `masjid-profile-${settings.date}${scale > 1 ? `-${SIZE * scale}px` : ''}.png`
+  anchor.download = file.name
   document.body.append(anchor)
   anchor.click()
   anchor.remove()

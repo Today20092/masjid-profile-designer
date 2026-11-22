@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
-import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, Share, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -15,7 +15,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
 import { createDefaults, designForAi, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
-import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
+import { ARTWORK_THEMES, ProfileArtwork, downloadProfile, renderProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
 import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
 
@@ -215,6 +215,15 @@ export default function App() {
   const numberedJumuah = settings.customRows.some(row => row.enabled && isExtraJumuah(row.en))
   const enabledCount = PRAYERS.filter(item => settings.prayers[item.id].enabled).length + settings.customRows.filter(row => row.enabled).length
 
+  // Phones with a share sheet can save straight to Photos (where WhatsApp picks group photos) or send the image to a chat.
+  const [canShareImage] = useState(() => navigator.maxTouchPoints > 0 && typeof navigator.canShare === 'function' && navigator.canShare({ files: [new File([''], 'test.png', { type: 'image/png' })] }))
+  async function shareImage() {
+    if (!result.settings || exporting) return
+    setExporting(true); setExportError(''); setDownloaded(false)
+    try { await navigator.share({ files: [await renderProfile(result.settings, result.rows, exportScale)] }); setDownloaded(true) }
+    catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) setExportError('The image could not be shared. Use Download PNG instead.') }
+    finally { setExporting(false) }
+  }
   async function download() {
     if (!result.settings || exporting) return
     setExporting(true); setExportError(''); setDownloaded(false)
@@ -313,6 +322,9 @@ export default function App() {
     }
   }
 
+  // The field to edit for the text the artwork had to shrink, when the user typed it.
+  const fitRow = settings.customRows.find(row => row.en === fitWarning || row.ar === fitWarning)
+  const fitField = !fitWarning ? '' : fitWarning === settings.name ? 'name' : fitWarning === settings.nameAr ? 'name-ar' : fitWarning === settings.location ? 'location' : fitWarning === settings.footer ? 'footer' : fitRow ? `${fitRow.en === fitWarning ? 'en' : 'ar'}-${fitRow.id}` : ''
   const errorPrayer = PRAYERS.find(item => result.error.startsWith(`${item.en} fixed time`))
   const errorTarget = /timezone/i.test(result.error) ? 'timezone' : /latitude/i.test(result.error) ? 'latitude' : /longitude/i.test(result.error) ? 'longitude' : /end date/i.test(result.error) ? 'end-date' : /date/i.test(result.error) ? 'date' : /masjid name/i.test(result.error) ? 'name' : errorPrayer ? `time-${errorPrayer.id}` : 'settings-errors'
   function revealError(event: React.MouseEvent<HTMLAnchorElement>) {
@@ -336,12 +348,12 @@ export default function App() {
             {result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} className="main-artwork" onFitWarning={setFitWarning} /> : <div className="preview-unavailable"><CircleHelp aria-hidden="true" /><p>Complete your settings<br />to see your design.</p></div>}
             <span className="crop-note">Designed to fit the circle</span>
           </div>
-          {fitWarning && <p className="fit-warning" role="status">“{fitWarning}” was shrunk to fit. Shorten it, show fewer rows, or use one time column for clearer text.</p>}
+          {fitWarning && <p className="fit-warning" role="status">{fitField ? <a href={`#${fitField}`} onClick={event => { event.preventDefault(); const field = document.getElementById(fitField); field?.focus(); field?.scrollIntoView({ block: 'center' }) }}>“{fitWarning}”</a> : <>“{fitWarning}”</>} was shrunk to fit. Shorten it, show fewer rows, or use one time column for clearer text.</p>}
           <div className="whatsapp-example">
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
           </div><Separator />
-          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button><p className="export-scale-label" id="export-scale-label">Image size</p><ToggleGroup variant="outline" className="segmented export-scale" aria-labelledby="export-scale-label" value={[String(exportScale)]} onValueChange={([value]) => { if (value) setExportScale(Number(value)) }}>{[1, 2, 3].map(scale => <ToggleGroupItem key={scale} value={String(scale)} aria-label={`${1080 * scale} pixels`}>{scale}×</ToggleGroupItem>)}</ToggleGroup><p>{1080 * exportScale} × {1080 * exportScale} px · {exportScale === 1 ? 'Ready for WhatsApp' : 'Sharper, for print or large screens'}</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
+          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button>{canShareImage && <Button size="lg" variant="outline" className="share-image-button" disabled={!result.settings || exporting} onClick={shareImage}><Share data-icon="inline-start" />Save to Photos or share</Button>}<p className="export-scale-label" id="export-scale-label">Image size</p><ToggleGroup variant="outline" className="segmented export-scale" aria-labelledby="export-scale-label" value={[String(exportScale)]} onValueChange={([value]) => { if (value) setExportScale(Number(value)) }}>{[1, 2, 3].map(scale => <ToggleGroupItem key={scale} value={String(scale)} aria-label={`${1080 * scale} pixels`}>{scale}×</ToggleGroupItem>)}</ToggleGroup><p>{1080 * exportScale} × {1080 * exportScale} px · {exportScale === 1 ? 'Ready for WhatsApp' : 'Sharper, for print or large screens'}</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
           <p className="how-to">Have a timetable photo? <a className="text-link" href="#ai-heading">An AI can fill this in for you.</a></p>
         </div></section>
@@ -421,7 +433,7 @@ export default function App() {
             </div>
           </section>
           <section className="editor-section">
-            <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2><p>Choose a theme, language, and readable text size.</p></div></div>
+            <div className="editor-heading"><div><h2 id="appearance-heading" tabIndex={-1}>Make it feel like home</h2></div></div>
             <FieldGroup>
               <Field><FieldLabel id="theme-label">Choose a theme</FieldLabel><ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[settings.theme]} onValueChange={([value]) => { const theme = [...THEME_IDS, 'custom' as const].find(theme => theme === value); if (theme) update('theme', theme) }}>{THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch" style={{ color: ARTWORK_THEMES[theme].gold, background: ARTWORK_THEMES[theme].background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}<ToggleGroupItem value="custom" className="theme-option"><span className="theme-swatch" style={{ color: customPalette.gold, background: customPalette.background }} aria-hidden="true"><Moon /><span /><span /><span /></span><span>Custom</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem></ToggleGroup></Field>
               {settings.theme === 'custom' && <FieldSet className="custom-colours"><FieldLegend variant="label">Your colours</FieldLegend>
