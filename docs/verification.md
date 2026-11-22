@@ -44,6 +44,8 @@ The user requested removing the sample label. The watermark, sample notice, conf
 
 ## Prayer text size presets
 
+Update: the presets are now Standard and Large. Extra large drew the same image as Large for most layouts, so it was removed; saved designs and links that say `extra` open as Large, and Large always uses the wide table.
+
 Standard, Large, and Extra large are saved with the design and applied to both previews and exports. Browser checks measured the default clock text at 45px, 53.1px, and 60.75px respectively. They also covered saved-state restoration, PNG download, eight rows, Arabic, two time columns, and measured text bounds inside the circular crop. Older saved designs default to Standard.
 
 ## Impeccable typography, palettes, and workflow follow-up
