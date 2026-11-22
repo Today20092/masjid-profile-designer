@@ -119,11 +119,10 @@ export function createDefaults(): Settings {
   }
 }
 
-// AI links (see public/llms.txt) send only what the timetable shows; the rest comes from the defaults.
-export function settingsFromPatch(value: unknown): Settings {
+// AI links (see public/llms.txt) and pasted text send only what changes; the rest comes from the base.
+// Without a base, the sample masjid's identity is blanked so it never leaks into someone else's design.
+export function settingsFromPatch(value: unknown, base: Settings = { ...createDefaults(), name: '', nameAr: '', location: '' }): Settings {
   const patch = object(value, 'Design')
-  // Blank the sample masjid's identity so it never leaks into someone else's design.
-  const base = { ...createDefaults(), name: '', nameAr: '', location: '' }
   const prayers: Record<string, unknown> = { ...base.prayers }
   if (patch.prayers !== undefined) {
     for (const [id, value] of Object.entries(object(patch.prayers, 'Prayer settings'))) {

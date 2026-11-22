@@ -26,13 +26,15 @@ A message below the full preview warns when text has been substantially reduced 
 
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
 
-Download creates a square 1080px PNG with all essential content inside a circle. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
+Download creates a square 1080px PNG with all essential content inside a circle. Under **Image size**, choose 2× (2160px) or 3× (3240px) for a sharper copy to print or show on a large screen; WhatsApp only needs 1×. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
 
 The chat-list avatar is too small to read the full timetable. Open the group photo for the details. Fewer rows, one language, and a short masjid name leave more room for readable text.
 
 ## Making a design with an AI
 
 If you have a photo of your timetable, press **Copy request for AI**, paste the request into ChatGPT, Claude, Gemini or another AI that can read web pages, and attach the photo. The AI reads the site's [instructions for AI assistants](../public/llms.txt) and replies with a link. Opening it loads the design and downloads the image; you can keep editing on the page.
+
+To change settings by hand or with an AI chat, open **Edit as text** in the same section: **Copy for AI** copies the settings with instructions, and **Apply** takes back an answer, even one that only lists the changes.
 
 If you already have a design saved in this browser, the page asks before replacing it, and Undo brings yours back. If the AI made a mistake, the page shows what is wrong; paste that message back to the AI for a corrected link. Check the times against your timetable before you post the image.
 

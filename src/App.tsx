@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -12,7 +13,7 @@ import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
-import { createDefaults, getDisplayRows, STORAGE_KEY, validateSettings } from './schedule'
+import { createDefaults, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
 import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
@@ -95,6 +96,7 @@ export default function App() {
 
   const [incomingDownload, setIncomingDownload] = useState(false)
   const [pendingDownload, setPendingDownload] = useState(false)
+  const [exportScale, setExportScale] = useState(1)
   const [aiNotice, setAiNotice] = useState('')
 
   useEffect(() => {
@@ -104,6 +106,7 @@ export default function App() {
     const opened = ai ? Promise.resolve().then(() => decodeAiDesign(ai.json)) : decodeSettings(code!)
     opened.then(shared => {
       const download = Boolean(ai?.download)
+      if (ai) setExportScale(ai.scale)
       // A first-time visitor has nothing to lose, so open the shared design straight away.
       if (initial.firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setPendingDownload(download); setLinkMessage({ ok: true, text: `Opened the ${ai ? '' : 'shared '}design for ${shared.name}.${download ? ' Your image is downloading; if it does not start, press Download.' : ''} Your changes save on this browser.` }) }
       else { setIncoming(shared); setIncomingDownload(download) }
@@ -178,12 +181,13 @@ export default function App() {
   function custom(id: string, patch: Partial<CustomRow>) {
     update('customRows', settings.customRows.map(row => row.id === id ? { ...row, ...patch } : row))
   }
+  const numberedJumuah = settings.customRows.some(row => row.enabled && isExtraJumuah(row.en))
   const enabledCount = PRAYERS.filter(item => settings.prayers[item.id].enabled).length + settings.customRows.filter(row => row.enabled).length
 
   async function download() {
     if (!result.settings || exporting) return
     setExporting(true); setExportError(''); setDownloaded(false)
-    try { await downloadProfile(result.settings, result.rows); setDownloaded(true) }
+    try { await downloadProfile(result.settings, result.rows, exportScale); setDownloaded(true) }
     catch (error) { setExportError(error instanceof Error ? error.message : 'The image could not be downloaded. Please try again.') }
     finally { setExporting(false) }
   }
@@ -265,7 +269,7 @@ export default function App() {
   function applyText() {
     // Forgive AI answers wrapped in ``` fences or a sentence: keep only the outermost { … }.
     try {
-      const next = validateSettings(JSON.parse(settingsText.slice(settingsText.indexOf('{'), settingsText.lastIndexOf('}') + 1)))
+      const next = settingsFromPatch(JSON.parse(settingsText.slice(settingsText.indexOf('{'), settingsText.lastIndexOf('}') + 1)), settings)
       setSettings(next); setSettingsText(JSON.stringify(next, null, 2)); setTextError(''); setShareError('')
       setShareNotice('Settings applied. Undo brings back your previous design.')
     } catch (error) {
@@ -301,8 +305,9 @@ export default function App() {
             {result.settings && <div className="mini-artwork" aria-hidden="true"><ProfileArtwork settings={result.settings} rows={result.rows} /></div>}
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
           </div><Separator />
-          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button><p>1080 × 1080 px · Ready for WhatsApp</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
+          <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button><p className="export-scale-label" id="export-scale-label">Image size</p><ToggleGroup variant="outline" className="segmented export-scale" aria-labelledby="export-scale-label" value={[String(exportScale)]} onValueChange={([value]) => { if (value) setExportScale(Number(value)) }}>{[1, 2, 3].map(scale => <ToggleGroupItem key={scale} value={String(scale)} aria-label={`${1080 * scale} pixels`}>{scale}×</ToggleGroupItem>)}</ToggleGroup><p>{1080 * exportScale} × {1080 * exportScale} px · {exportScale === 1 ? 'Ready for WhatsApp' : 'Sharper, for print or large screens'}</p>{(result.error || exportError) && <p><a href={`#${errorTarget}`} onClick={revealError}>{result.error || exportError} Review settings.</a></p>}{downloaded && <p role="status">Image ready. Set it as your WhatsApp group photo.</p>}</div>
           <p className="how-to">Download your image, then open your WhatsApp group → tap the group name → edit its photo.</p>
+          <p className="how-to">Have a timetable photo? <a className="text-link" href="#ai-heading">An AI can fill this in for you.</a></p>
         </div></section>
         <section className="editor-column" aria-label="Customize your timetable">
           {previewPinned && <aside className="mobile-edit-preview" id="editing-preview" aria-label="Preview while editing"><div className="editing-artwork" aria-hidden="true">{result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} /> : <p>Fix your settings to see the preview.</p>}</div><div><strong>Live preview</strong><p>Your changes appear here.</p><a className={buttonVariants({ variant: 'link' })} href="#preview-title" onClick={() => setPreviewPinned(false)}>Full image</a><Button variant="outline" onClick={() => setPreviewPinned(false)}>Close preview</Button></div></aside>}
@@ -332,7 +337,7 @@ export default function App() {
                 <FieldSet className="date-range"><FieldLegend variant="label">Timetable dates</FieldLegend>
                   <div className="two-fields">
                     <Field data-invalid={errorTarget === 'date'}><FieldLabel htmlFor="date">Start</FieldLabel><Input id="date" required aria-invalid={errorTarget === 'date'} aria-describedby={errorTarget === 'date' ? 'date-range-help date-error' : 'date-range-help'} type="date" min="1900-01-01" max="2100-12-31" value={settings.date} onChange={e => update('date', e.target.value)} /></Field>
-                    <Field className="end-date-field" data-invalid={errorTarget === 'end-date'}><FieldLabel htmlFor="end-date">End <span className="optional-label">(optional)</span></FieldLabel><Input id="end-date" aria-invalid={errorTarget === 'end-date'} aria-describedby={errorTarget === 'end-date' ? 'date-range-help end-date-error' : 'date-range-help'} type="date" min={settings.date} max="2100-12-31" value={settings.endDate} onChange={e => update('endDate', e.target.value)} />{settings.endDate && <Button variant="link" className="clear-end-date" aria-label="Clear end date" onClick={clearEndDate}><X data-icon="inline-start" />Clear</Button>}</Field>
+                    <Field data-invalid={errorTarget === 'end-date'}><FieldLabel htmlFor="end-date">End <span className="optional-label">(optional)</span></FieldLabel><Input id="end-date" aria-invalid={errorTarget === 'end-date'} aria-describedby={errorTarget === 'end-date' ? 'date-range-help end-date-error' : 'date-range-help'} type="date" min={settings.date} max="2100-12-31" value={settings.endDate} onChange={e => update('endDate', e.target.value)} />{settings.endDate && <Button variant="link" className="clear-end-date" onClick={clearEndDate}><X data-icon="inline-start" />Clear end date</Button>}</Field>
                   </div>
                   {errorTarget === 'date' && <FieldError id="date-error">{result.error}</FieldError>}
                   {errorTarget === 'end-date' && <FieldError id="end-date-error">{result.error}</FieldError>}
@@ -351,7 +356,7 @@ export default function App() {
                 const calculated = result.rows.find(display => display.id === item.id)
                 return <Accordion className="prayer-editor" key={item.id} data-enabled={row.enabled}><AccordionItem value="options" className="border-0">
                   <div className="prayer-main">
-                    <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${item.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => prayer(item.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${item.id}`}><span className="prayer-name">{item.en}<span lang="ar" dir="rtl" className="prayer-arabic">{item.ar}</span></span></FieldLabel></Field>
+                    <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${item.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => prayer(item.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${item.id}`}><span className="prayer-name">{item.id === 'jumuah' && numberedJumuah ? 'Jumu‘ah 1' : item.en}<span lang="ar" dir="rtl" className="prayer-arabic">{item.id === 'jumuah' && numberedJumuah ? JUMUAH_AR[0] : item.ar}</span></span></FieldLabel></Field>
                     {row.enabled && <div className="compact-value">
                       {item.id === 'sunrise' ? <output aria-label="Calculated sunrise">{calculated?.adhan || '—'}</output> : row.iqamahMode === 'fixed' || item.id === 'jumuah' ? <Field><FieldLabel htmlFor={`time-${item.id}`} className="sr-only">{item.en} iqamah time</FieldLabel><Input id={`time-${item.id}`} type="time" required aria-invalid={!row.fixed} aria-describedby={!row.fixed ? `time-${item.id}-error` : undefined} value={row.fixed} onChange={e => prayer(item.id, { fixed: e.target.value })} />{!row.fixed && <FieldError id={`time-${item.id}-error`}>Enter an iqamah time.</FieldError>}{row.fixed && item.id !== 'jumuah' && calculated?.adhan && <span className="delay-unit">Adhan {calculated.adhan}</span>}</Field> : <><NumberField id={`delay-${item.id}`} label={`${item.en} minutes after adhan`} compact min={0} max={240} value={row.delay} onChange={value => prayer(item.id, { delay: value })} /><span className="delay-unit">min after adhan</span></>}
                     </div>}
@@ -365,7 +370,11 @@ export default function App() {
                   </FieldGroup></AccordionContent>}
                 </AccordionItem></Accordion>
               })}
-              {settings.customRows.map(row => <div className="prayer-editor custom-prayer" key={row.id}>
+              {settings.customRows.map(row => isExtraJumuah(row.en) ? <div className="prayer-editor" key={row.id} data-enabled={row.enabled}><div className="prayer-main">
+                <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${row.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => custom(row.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${row.id}`}><span className="prayer-name">{row.en}<span lang="ar" dir="rtl" className="prayer-arabic">{row.ar}</span></span></FieldLabel></Field>
+                {row.enabled && <div className="compact-value"><Field><FieldLabel htmlFor={`custom-time-${row.id}`} className="sr-only">{row.en} time</FieldLabel><Input id={`custom-time-${row.id}`} type="time" required aria-invalid={!row.time} aria-describedby={!row.time ? `custom-time-${row.id}-error` : undefined} value={row.time} onChange={e => custom(row.id, { time: e.target.value })} />{!row.time && <FieldError id={`custom-time-${row.id}-error`}>Enter a time.</FieldError>}</Field></div>}
+                <Button variant="ghost" size="icon" className="remove-row" aria-label={`Remove ${row.en}`} onClick={() => removeCustomRow(row)}><Trash2 /></Button>
+              </div></div> : <div className="prayer-editor custom-prayer" key={row.id}>
                 <Field orientation="horizontal" className="prayer-heading"><Checkbox id={`enable-${row.id}`} checked={row.enabled} disabled={!row.enabled && enabledCount >= MAX_ROWS} onCheckedChange={checked => custom(row.id, { enabled: checked === true })} /><FieldLabel htmlFor={`enable-${row.id}`}>{row.en || 'Custom row'}</FieldLabel><Button variant="ghost" size="icon" aria-label={`Remove ${row.en || 'custom row'}`} onClick={() => removeCustomRow(row)}><Trash2 /></Button></Field>
                 <FieldGroup className="prayer-controls"><FieldGroup className="two-fields"><Field><FieldLabel htmlFor={`en-${row.id}`}>English label</FieldLabel><Input id={`en-${row.id}`} maxLength={30} value={row.en} onChange={e => custom(row.id, { en: e.target.value })} /></Field><Field><FieldLabel htmlFor={`ar-${row.id}`}>Arabic label</FieldLabel><Input id={`ar-${row.id}`} lang="ar" dir="rtl" maxLength={30} value={row.ar} onChange={e => custom(row.id, { ar: e.target.value })} /></Field></FieldGroup><Field><FieldLabel htmlFor={`custom-time-${row.id}`}>Time</FieldLabel><Input id={`custom-time-${row.id}`} type="time" required aria-invalid={!row.time} aria-describedby={!row.time ? `custom-time-${row.id}-error` : undefined} value={row.time} onChange={e => custom(row.id, { time: e.target.value })} />{!row.time && <FieldError id={`custom-time-${row.id}-error`}>Enter a time for this row.</FieldError>}</Field></FieldGroup>
               </div>)}
@@ -415,6 +424,13 @@ export default function App() {
             <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Have a timetable photo? Send it to ChatGPT, Claude, Gemini or another AI with this request. It replies with a link that opens your design and downloads the image.</p></div></div>
             <div className="share-actions"><Button variant="outline" onClick={copyAiRequest}><Sparkles data-icon="inline-start" />Copy request for AI</Button></div>
             <p className="share-status" role="status">{aiNotice}</p>
+            <Accordion className="settings-text" value={textOpen ? ['text'] : []} onValueChange={value => openText(value.includes('text'))}><AccordionItem value="text"><AccordionTrigger><span className="advanced-title"><Braces aria-hidden="true" /><span>Edit as text<span>Paste or copy the settings</span></span></span></AccordionTrigger><AccordionContent>
+              <Field data-invalid={Boolean(textError)}><FieldLabel htmlFor="settings-text" className="sr-only">Settings as text</FieldLabel>
+                <Textarea id="settings-text" className="settings-textarea" spellCheck={false} autoComplete="off" aria-invalid={Boolean(textError)} aria-describedby={textError ? 'settings-text-error' : undefined} value={settingsText} onChange={e => { setSettingsText(e.target.value); setTextError('') }} />
+                {textError && <FieldError id="settings-text-error">{textError}</FieldError>}
+              </Field>
+              <div className="share-actions"><Button variant="outline" onClick={copyForAi}><Copy data-icon="inline-start" />Copy for AI</Button><Button onClick={applyText}><Check data-icon="inline-start" />Apply</Button></div>
+            </AccordionContent></AccordionItem></Accordion>
           </section>
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="share-heading">Share or back up</h2><p>Changes save on this browser automatically. To send this design or keep a copy, use a link or a settings file.</p></div></div>
@@ -425,19 +441,12 @@ export default function App() {
               <input id="settings-file" type="file" accept="application/json,.json" hidden onChange={openFile} />
             </div>
             <p className={shareError ? 'share-status share-error' : 'share-status'} role="status">{shareError || shareNotice}</p>
-            <Accordion className="settings-text" value={textOpen ? ['text'] : []} onValueChange={value => openText(value.includes('text'))}><AccordionItem value="text"><AccordionTrigger><span className="advanced-title"><Braces aria-hidden="true" /><span>Edit as text<span>Copy for an AI with a timetable photo, then paste its answer back</span></span></span></AccordionTrigger><AccordionContent>
-              <Field data-invalid={Boolean(textError)}><FieldLabel htmlFor="settings-text" className="sr-only">Settings as text</FieldLabel>
-                <textarea id="settings-text" className="settings-textarea" spellCheck={false} autoComplete="off" aria-invalid={Boolean(textError)} aria-describedby={textError ? 'settings-text-error' : undefined} value={settingsText} onChange={e => { setSettingsText(e.target.value); setTextError('') }} />
-                {textError && <FieldError id="settings-text-error">{textError}</FieldError>}
-              </Field>
-              <div className="share-actions"><Button variant="outline" onClick={copyForAi}><Copy data-icon="inline-start" />Copy for AI</Button><Button onClick={applyText}><Check data-icon="inline-start" />Apply</Button></div>
-            </AccordionContent></AccordionItem></Accordion>
           </section>
           <div className="editor-footer"><span className="save-status" role="status"><Clock3 aria-hidden="true" />{editNotice || (saved ? 'Saved on this browser' : storageBlocked ? 'Saved data protected' : result.error ? 'Fix settings to save' : 'Not saved yet')}</span><div className="edit-actions"><Button variant="outline" disabled={!history.past.length} onClick={undo} title="Undo (Ctrl/Cmd+Z)" aria-keyshortcuts="Control+Z Meta+Z">Undo</Button><Button variant="outline" disabled={!history.future.length} onClick={redo} title="Redo (Ctrl/Cmd+Shift+Z)" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Redo</Button><Button variant="ghost" onClick={reset}><RotateCcw data-icon="inline-start" />Reset</Button></div></div>
         </section>
       </div>
       <p className="sr-only error-announcer" aria-live="polite">{spokenError}</p>
     </main>
-    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button size="lg" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? 'Preparing a 1080 × 1080 PNG…' : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? 'Saved on this browser · 1080 × 1080 PNG' : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
+    <div className="mobile-download"><div className="mobile-actions"><Button size="lg" variant="outline" aria-pressed={previewPinned} onClick={togglePreview}>Preview</Button><Button size="lg" variant="outline" disabled={!history.past.length} onClick={undo}>Undo</Button><Button size="lg" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button></div><div className="mobile-feedback"><p role="status">{exportError || result.error || (exporting ? `Preparing a ${1080 * exportScale} × ${1080 * exportScale} PNG…` : downloaded ? 'Image ready. Set it as your WhatsApp group photo.' : editNotice || (saved ? `Saved on this browser · ${1080 * exportScale} × ${1080 * exportScale} PNG` : storageNotice || 'Changes are not saved yet.'))}{result.error && <> <a href={`#${errorTarget}`} onClick={revealError}>Review settings</a></>}</p>{history.future.length > 0 && <Button variant="link" onClick={redo}>Redo</Button>}</div></div>
   </>
 }
