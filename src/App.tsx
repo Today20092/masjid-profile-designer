@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { clearSharedCode, decodeAiDesign, decodeSettings, readAiLink, readSettingsFile, readSharedCode, saveSettingsFile, shareLink } from './share'
 import { PRAYERS, MAX_ROWS, THEME_IDS, JUMUAH_AR, isExtraJumuah, type Settings, type PrayerId, type PrayerSetting, type CustomRow } from './model'
-import { createDefaults, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
+import { createDefaults, designForAi, getDisplayRows, settingsFromPatch, STORAGE_KEY, validateSettings } from './schedule'
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
 import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
@@ -197,9 +197,14 @@ export default function App() {
     setPendingDownload(false)
     if (result.settings) download()
   }, [pendingDownload, result.settings])
+  const guideUrl = new URL('llms.txt', location.href.split('#')[0])
   async function copyAiRequest() {
-    const request = `Make our masjid's WhatsApp prayer-times image from the attached timetable photo. Follow the instructions at ${new URL('llms.txt', location.href.split('#')[0])} and reply with the link.`
-    try { await navigator.clipboard.writeText(request); setAiNotice('Request copied. Paste it into your AI chat and attach the timetable photo.') }
+    // An untouched sample says nothing about the user's masjid, so the AI starts fresh; otherwise it updates this design.
+    const { date: _date, ...mine } = designForAi(settings)
+    const { date: _sampleDate, ...sample } = designForAi(createDefaults())
+    const current = JSON.stringify(mine) === JSON.stringify(sample) ? '' : `\n\nOur current design, to update:\n${JSON.stringify(designForAi(settings))}`
+    const request = `Make our masjid's WhatsApp prayer-times image. Follow the instructions at ${guideUrl} and reply with the link. I'll attach our timetable photo or tell you the times.${current}`
+    try { await navigator.clipboard.writeText(request); setAiNotice('Request copied. Paste it into your AI chat, then attach your timetable photo or type the changes.') }
     catch { window.prompt('Copy this request into your AI chat:', request) }
   }
   function useLocation() {
@@ -259,10 +264,10 @@ export default function App() {
   }
   function openText(open: boolean) {
     setTextOpen(open); setTextError('')
-    if (open) setSettingsText(JSON.stringify(settings, null, 2))
+    if (open) setSettingsText(JSON.stringify(designForAi(settings), null, 2))
   }
   async function copyForAi() {
-    const prompt = 'Update these Masjid Profile Studio settings to match the attached timetable image. Keep the same JSON structure and keys. Use 24-hour HH:MM times, and "iqamahMode": "fixed" for set iqamah times. Extra rows, such as a second Jumu‘ah, go in "customRows", each with a unique "id". Return only the JSON.'
+    const prompt = `Update this masjid prayer-times design to match the attached timetable photo. The format is explained at ${guideUrl}. Reply with only the JSON, not a link.`
     try { await navigator.clipboard.writeText(`${prompt}\n\n${settingsText}`); setTextError(''); setShareError(''); setShareNotice('Copied with instructions. Paste it into an AI chat with a photo of your timetable, then paste its answer back here.') }
     catch { setTextError('Copying is blocked in this browser. Select the text below and copy it.') }
   }
@@ -270,7 +275,7 @@ export default function App() {
     // Forgive AI answers wrapped in ``` fences or a sentence: keep only the outermost { … }.
     try {
       const next = settingsFromPatch(JSON.parse(settingsText.slice(settingsText.indexOf('{'), settingsText.lastIndexOf('}') + 1)), settings)
-      setSettings(next); setSettingsText(JSON.stringify(next, null, 2)); setTextError(''); setShareError('')
+      setSettings(next); setSettingsText(JSON.stringify(designForAi(next), null, 2)); setTextError(''); setShareError('')
       setShareNotice('Settings applied. Undo brings back your previous design.')
     } catch (error) {
       setTextError(error instanceof SyntaxError ? 'This text is not complete settings. Check it runs from the first { to the last }. Your design was not changed.' : `${error instanceof Error ? error.message : 'These settings are not valid.'} Your design was not changed.`)
@@ -421,7 +426,7 @@ export default function App() {
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
           </FieldGroup></AccordionContent></AccordionItem></Accordion></section>
           <section className="editor-section">
-            <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Have a timetable photo? Send it to ChatGPT, Claude, Gemini or another AI with this request. It replies with a link that opens your design and downloads the image.</p></div></div>
+            <div className="editor-heading"><div><h2 id="ai-heading">Make it with an AI</h2><p>Paste this request into ChatGPT, Claude, Gemini, Grok or another AI, then attach your timetable photo or type the new times. It replies with a link that opens your design and downloads the image. If you already have a design, the AI updates it.</p></div></div>
             <div className="share-actions"><Button variant="outline" onClick={copyAiRequest}><Sparkles data-icon="inline-start" />Copy request for AI</Button></div>
             <p className="share-status" role="status">{aiNotice}</p>
             <Accordion className="settings-text" value={textOpen ? ['text'] : []} onValueChange={value => openText(value.includes('text'))}><AccordionItem value="text"><AccordionTrigger><span className="advanced-title"><Braces aria-hidden="true" /><span>Edit as text<span>Paste or copy the settings</span></span></span></AccordionTrigger><AccordionContent>

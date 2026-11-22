@@ -1,16 +1,18 @@
 # Masjid Profile Studio
 
-> Free web app that turns a masjid's prayer timetable into a 1080 × 1080 WhatsApp profile image, in English, Arabic or both. AI assistants can make a design by writing a link: no account, API key or server call is needed.
+> Free web app that turns a masjid's prayer timetable into a 1080 × 1080 WhatsApp profile image, in English, Arabic or both. AI assistants make or update a design by writing a link: no account, API key or server call is needed.
 
 App: https://today20092.github.io/masjid-profile-designer/
 
-## When a user sends you a timetable photo
+## When a user asks for a prayer-times image
 
-1. Read the masjid name (English and Arabic, if shown), the date or date range, and each iqamah time.
-2. Build a design JSON object as described below. Include only what the photo shows; anything you leave out uses a sensible default.
-3. Reply with the AI link. Opening it loads the design and downloads the PNG. The user can still edit it on the page.
-
-Do not invent times. If a time is unreadable, leave that prayer out and tell the user, so they can add it on the page.
+1. Read the timetable, from a photo or from times the user types: the masjid name (English and Arabic, if shown), the date, and every prayer time.
+   - A timetable with one row per day (a monthly timetable): use today's row, unless the user names a day. Set `endDate` for a range only when every time stays the same across it.
+2. Build the design JSON described below.
+   - If the user's message includes "Our current design", start from that JSON, change only what the timetable or the user changes, and send back the whole object.
+   - Otherwise build a new object. A built-in prayer you leave out shows a sample time, so give Fajr, Dhuhr, Asr, Maghrib, Isha and Jumu‘ah each a time, or `"enabled": false` when the timetable leaves it out.
+3. Check the JSON against the timetable: every prayer the timetable shows has its time, and every built-in prayer it leaves out has `"enabled": false`. Use only times you can read; set an unreadable one to `"enabled": false` and tell the user.
+4. Reply with the AI link, then list the times you used so the user can compare them with the timetable. Opening the link loads the design and downloads the PNG; the user can still edit it on the page.
 
 ## AI link format
 
@@ -56,14 +58,16 @@ Keys: `fajr`, `sunrise`, `dhuhr`, `asr`, `maghrib`, `isha`, `jumuah`. Each value
 - `fixed`: the iqamah time, 24-hour `HH:MM`, like `"13:30"`. Giving it uses that exact time.
 - `delay`: instead of `fixed`, minutes after the calculated adhan (0–240). Set `latitude`, `longitude` and `timezone` too.
 - `enabled`: `false` hides the row. A prayer you list is shown.
+- `showRelative`: with `delay`, `true` prints "10 minutes after adhan" instead of a clock time.
+- `adjustment`: minutes added to the calculated adhan, such as `2` or `-1`.
 
-Fajr, Dhuhr, Asr, Maghrib, Isha and Jumu‘ah are shown by default with sample times, so give a time for each one the photo shows, and set `"enabled": false` for any it leaves out. Sunrise is hidden unless you list it.
+Sunrise is hidden unless you list it.
 
 ### customRows
 
 A list of rows shown after the built-in ones, each `{ "en": "...", "ar": "...", "time": "HH:MM" }`, labels up to 30 characters each.
 
-For more Jumu‘ah prayers, set the first one as `prayers.jumuah` and add the others as rows named exactly:
+For more Jumu‘ah prayers, set the first one as `prayers.jumuah` and add the others as rows named:
 
 | en | ar |
 | --- | --- |
@@ -71,7 +75,7 @@ For more Jumu‘ah prayers, set the first one as `prayers.jumuah` and add the ot
 | `Jumu‘ah 3` | `الجمعة الثالثة` |
 | `Jumu‘ah 4` | `الجمعة الرابعة` |
 
-The built-in row is then labelled Jumu‘ah 1. The image fits at most 8 rows in total.
+A plain apostrophe (`Jumu'ah 2`) works too. The built-in row is then labelled Jumu‘ah 1. The image fits at most 8 rows in total.
 
 ## Example
 

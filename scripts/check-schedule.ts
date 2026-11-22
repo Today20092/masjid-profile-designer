@@ -108,3 +108,17 @@ console.log('Schedule checks passed')
   assert.equal(next.prayers.isha.fixed, current.prayers.isha.fixed)
   console.log('Pasted settings merge ok')
 }
+{
+  // designForAi (the llms.txt form) reads back as the same design, and AI-typed Jumu'ah labels are respelt.
+  const { designForAi, settingsFromPatch } = await import('../src/schedule.ts')
+  const s = { ...createDefaults(), date: '2026-10-23', endDate: '2026-10-30' }
+  s.prayers.isha = { ...s.prayers.isha, iqamahMode: 'after', delay: 10, showRelative: false, adjustment: 2 }
+  s.prayers.asr.enabled = false
+  s.customRows = [{ id: 'custom-1', en: 'Jumu‘ah 2', ar: 'الجمعة الثانية', time: '14:30', enabled: true }]
+  const back = settingsFromPatch(designForAi(s))
+  assert.deepEqual(getDisplayRows(back), getDisplayRows(s))
+  assert.deepEqual(back, s)
+  assert.equal(settingsFromPatch({ name: 'X', customRows: [{ en: "Jumu'ah 2", ar: '', time: '15:00' }] }).customRows[0].en, 'Jumu‘ah 2')
+  assert.equal(settingsFromPatch({ name: 'X', customRows: [{ en: 'Jumuah 3', ar: '', time: '15:00' }] }).customRows[0].en, 'Jumu‘ah 3')
+  console.log('AI design round trip ok')
+}

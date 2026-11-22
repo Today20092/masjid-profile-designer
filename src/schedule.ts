@@ -134,9 +134,29 @@ export function settingsFromPatch(value: unknown, base: Settings = { ...createDe
     }
   }
   const customRows = Array.isArray(patch.customRows)
-    ? patch.customRows.map((value, i) => ({ id: `custom-${i + 1}`, en: '', ar: '', enabled: true, ...object(value, `Custom row ${i + 1}`) }))
+    ? patch.customRows.map((value, i) => {
+      const row = { id: `custom-${i + 1}`, en: '', ar: '', enabled: true, ...object(value, `Custom row ${i + 1}`) }
+      // AIs type Jumu'ah or Jumuah; store the app's spelling so labels match the built-in row.
+      return typeof row.en === 'string' && isExtraJumuah(row.en) ? { ...row, en: `Jumu‘ah ${row.en.match(/\d+/)![0]}` } : row
+    })
     : patch.customRows ?? base.customRows
   return validateSettings({ ...base, ...patch, version: 1, prayers, customRows })
+}
+
+// The design in the short form public/llms.txt documents, for AI chats and Edit as text; settingsFromPatch reads it back.
+export function designForAi(s: Settings) {
+  const { version: _version, prayers, customRows, customColor, customAccent, endDate, ...rest } = s
+  return {
+    ...rest,
+    ...(endDate ? { endDate } : {}),
+    ...(s.theme === 'custom' ? { customColor, customAccent } : {}),
+    prayers: Object.fromEntries(PRAYERS.map(({ id }) => {
+      const p = prayers[id]
+      if (!p.enabled) return [id, { enabled: false }]
+      return [id, { ...(p.iqamahMode === 'fixed' ? { fixed: p.fixed } : { delay: p.delay, showRelative: p.showRelative }), ...(p.adjustment ? { adjustment: p.adjustment } : {}) }]
+    })),
+    customRows: customRows.map(({ en, ar, time, enabled }) => ({ en, ar, time, ...(enabled ? {} : { enabled: false }) })),
+  }
 }
 
 export function getDisplayRows(settings: Settings): DisplayRow[] {
