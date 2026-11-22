@@ -10,11 +10,8 @@ assert.equal(validateSettings({ ...settings, confirmed: false }).name, settings.
 const withoutTextSize = structuredClone(settings)
 delete withoutTextSize.textSize
 assert.equal(validateSettings(withoutTextSize).textSize, 'standard')
-assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'extra')
-const withoutTableWidth = { ...settings, tableWidth: undefined }
-assert.equal(validateSettings(withoutTableWidth).tableWidth, 'standard')
-assert.equal(validateSettings({ ...settings, tableWidth: 'wide' }).tableWidth, 'wide')
-assert.throws(() => validateSettings({ ...settings, tableWidth: 'extra' }), /table width/)
+assert.equal(validateSettings({ ...settings, textSize: 'extra' }).textSize, 'large')
+assert.equal('tableWidth' in validateSettings({ ...settings, tableWidth: 'wide' }), false)
 for (const theme of THEME_IDS) assert.equal(validateSettings({ ...settings, theme }).theme, theme)
 assert.equal(validateSettings({ ...settings, theme: 'custom', customColor: '#ABCDEF' }).customColor, '#abcdef')
 assert.throws(() => validateSettings({ ...settings, customColor: 'red' }))

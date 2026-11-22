@@ -146,9 +146,10 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   ctx.globalAlpha = 1
 
   const bothColumns = settings.timeDisplay === 'both'
-  const wide = settings.tableWidth === 'wide'
+  // Large uses the wide table and the biggest text that fits; the row caps below keep it inside the circle.
+  const wide = settings.textSize === 'large'
   const typeBoost = wide ? 1.15 : 1
-  const scale = settings.textSize === 'extra' ? 1.35 : settings.textSize === 'large' ? 1.18 : 1
+  const scale = wide ? 1.35 : 1
   // Bigger text sizes mostly enlarge prayer names; times grow at half the rate and never pass 1.35× the masjid name, so the name stays the headline.
   const timeScale = 1 + (scale - 1) / 2
   const timeCap = (bilingual ? 42 : 48) * 1.35

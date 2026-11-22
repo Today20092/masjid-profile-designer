@@ -42,8 +42,7 @@ Every field is optional except `name`.
 | `theme` | `emerald` (default), `midnight`, `ivory`, `plum`, `rose`, `charcoal`, or `custom`. |
 | `customColor` | With `theme: "custom"`: main colour, like `#1f5c4a`. |
 | `customAccent` | With `theme: "custom"`: accent colour, like `#c9a227`. |
-| `textSize` | `standard` (default), `large` or `extra`. |
-| `tableWidth` | `standard` (default) or `wide`. |
+| `textSize` | `standard` (default) or `large`: a wider table with the biggest text that fits. |
 | `footer` | One line under the table, up to 100 characters, such as a website or phone number. |
 | `latitude`, `longitude`, `timezone` | The masjid's coordinates and IANA timezone, like `America/New_York`. Needed only for adhan times or iqamah given as minutes after adhan. Default: Tampa, Florida. |
 | `method` | Adhan calculation: `NorthAmerica` (default), `MuslimWorldLeague`, `Egyptian`, `UmmAlQura`, `Karachi`, `MoonsightingCommittee`. |

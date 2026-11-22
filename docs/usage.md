@@ -18,7 +18,7 @@ Use **Edit times** and **Choose design** to jump to those controls. On a phone, 
 
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 
-Choose **Standard**, **Large**, or **Extra large** under **Text size**. Larger sizes spread the table across more of the circle and enlarge prayer names most; times grow a little and stay below about 1.35× the masjid name. Rows narrow near the circle's edges to protect the crop. With seven or eight rows, the space in the circle limits how much Large and Extra large can add. Your choice is saved in this browser and used for PNG exports.
+Choose **Standard** or **Large** under **Text size**. Large spreads the table across more of the circle and uses the biggest text that fits: prayer names grow most, and times stay below about 1.35× the masjid name. Rows narrow near the circle's edges to protect the crop. Designs saved with the old Extra large size open as Large. Your choice is saved in this browser and used for PNG exports.
 
 A message below the full preview names any text that was substantially reduced to fit. Shorten it, use fewer rows, or show one time column to give that text more room.
 
