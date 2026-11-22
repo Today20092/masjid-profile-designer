@@ -293,3 +293,5 @@ body:has(input:focus) .mobile-download { display: none; }
 .prayer-main > .remove-row { grid-column: 3; }
 .text-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 .date-range > [data-slot="field-legend"] { font-weight: 650; font-size: 0.8125rem; }
+.logo-choice { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.logo-choice img { width: 56px; height: 56px; object-fit: contain; border: 1px solid var(--border); border-radius: 10px; background: var(--muted); padding: 6px; }

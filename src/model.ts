@@ -21,6 +21,7 @@ export type Settings = {
   madhab: 'standard' | 'hanafi'; date: string; endDate: string; language: Language;
   theme: ThemeId | 'custom'; customColor: string; customAccent: string; timeDisplay: TimeDisplay; use24Hour: boolean;
   textSize: 'standard' | 'large';
+  emblem: 'star' | 'none' | 'logo'; logo: string;
   footer: string;
   prayers: Record<PrayerId, PrayerSetting>; customRows: CustomRow[];
 }

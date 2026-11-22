@@ -41,7 +41,8 @@ export function decodeAiDesign(json: string) {
 export const clearSharedCode = () => history.replaceState(null, '', location.pathname + location.search)
 
 export async function shareLink(settings: Settings) {
-  return `${location.origin}${location.pathname}#s=${await encodeSettings(settings)}`
+  // An uploaded logo would make the link too long; settings files carry it instead.
+  return `${location.origin}${location.pathname}#s=${await encodeSettings({ ...settings, logo: '' })}`
 }
 
 export function saveSettingsFile(settings: Settings) {
@@ -52,6 +53,6 @@ export function saveSettingsFile(settings: Settings) {
 }
 
 export async function readSettingsFile(file: File) {
-  if (file.size > 100_000) throw new Error('That file is too large to be a settings file.')
+  if (file.size > 500_000) throw new Error('That file is too large to be a settings file.')
   return validateSettings(JSON.parse(await file.text()))
 }

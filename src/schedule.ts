@@ -34,6 +34,12 @@ function clock(value: unknown, label: string): string {
   return value
 }
 
+// An uploaded logo is stored as a small image data URL (resized to 256px when uploaded).
+function logo(value: unknown) {
+  if (typeof value !== 'string' || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value)) throw new Error('The logo must be a PNG, JPEG or WebP image.')
+  if (value.length > 200_000) throw new Error('The logo is too large. Upload it again on the page.')
+  return value
+}
 function hex(value: unknown, label: string) {
   if (typeof value !== 'string' || !isHex(value)) throw new Error(`${label} must be a colour like #1f5c4a.`)
   return value.toLowerCase()
@@ -98,6 +104,9 @@ export function validateSettings(value: unknown): Settings {
     use24Hour: boolean(s.use24Hour, '24-hour format'),
     // Older designs and links may say "extra" (now the same as Large) or carry a tableWidth, which text size now decides.
     textSize: s.textSize === undefined ? 'standard' : s.textSize === 'extra' ? 'large' : choice(s.textSize, ['standard', 'large'], 'prayer text size'),
+    // Older designs have no top symbol setting and keep the star.
+    emblem: s.emblem === undefined ? 'star' : choice(s.emblem, ['star', 'none', 'logo'], 'top symbol'),
+    logo: s.logo === undefined || s.logo === '' ? '' : logo(s.logo),
     footer: text(s.footer, 'Footer', 100), prayers, customRows,
   }
 }
@@ -110,7 +119,7 @@ export function createDefaults(): Settings {
     version: 1, name: 'Masjid Abu Bakr', nameAr: 'مسجد أبو بكر', location: '11010 N 30th St, Tampa, FL',
     latitude: 28.048619, longitude: -82.426613, timezone: 'America/New_York', method: 'NorthAmerica', madhab: 'standard',
     date: `${part('year')}-${part('month')}-${part('day')}`, endDate: '', language: 'both', theme: 'emerald', customColor: '#1f5c4a', customAccent: '', timeDisplay: 'iqamah',
-    use24Hour: false, textSize: 'standard', footer: '', customRows: [],
+    use24Hour: false, textSize: 'standard', emblem: 'star', logo: '', footer: '', customRows: [],
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
       fixed: fixed[i], delay: prayer.id === 'maghrib' ? 7 : 15, adjustment: 0,
@@ -145,7 +154,8 @@ export function settingsFromPatch(value: unknown, base: Settings = { ...createDe
 
 // The design in the short form public/llms.txt documents, for AI chats and Edit as text; settingsFromPatch reads it back.
 export function designForAi(s: Settings) {
-  const { version: _version, prayers, customRows, customColor, customAccent, endDate, ...rest } = s
+  // The logo image stays out: it is too large for a chat or a link, and the page keeps it.
+  const { version: _version, logo: _logo, prayers, customRows, customColor, customAccent, endDate, ...rest } = s
   return {
     ...rest,
     ...(endDate ? { endDate } : {}),

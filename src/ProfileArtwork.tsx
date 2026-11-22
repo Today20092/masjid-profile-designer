@@ -24,6 +24,18 @@ async function loadFonts() {
   ])
 }
 
+const logos = new Map<string, Promise<HTMLImageElement>>()
+function loadLogo(settings: Settings) {
+  if (settings.emblem !== 'logo' || !settings.logo) return Promise.resolve(undefined)
+  if (!logos.has(settings.logo)) logos.set(settings.logo, new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('The logo could not be read. Upload it again.'))
+    image.src = settings.logo
+  }))
+  return logos.get(settings.logo)!
+}
+
 function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string, arabic = false, weight = 500) {
   const intendedSize = size
   ctx.fillStyle = color
@@ -82,7 +94,7 @@ function relativeWording(minutes: number, language: Settings['language']) {
 export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
   settings.theme === 'custom' ? derivePalette(settings.customColor, settings.customAccent) : ARTWORK_THEMES[settings.theme]
 
-function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[], resolution = 1) {
+function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[], resolution = 1, logo?: HTMLImageElement) {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Your browser could not create the profile image. Please try another browser.')
   canvas.width = SIZE * resolution
@@ -116,16 +128,23 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     ctx.lineTo(540 + Math.cos(next) * 480, 540 + Math.sin(next) * 480)
     ctx.stroke()
   }
-  ctx.globalAlpha = 0.9
-  ctx.lineWidth = 2
-  ctx.save()
-  ctx.translate(540, 102)
-  for (let index = 0; index < 2; index++) {
-    ctx.rotate(Math.PI / 4)
-    ctx.strokeRect(-15, -15, 30, 30)
-  }
-  ctx.restore()
   ctx.globalAlpha = 1
+  // Top symbol: the masjid's logo fitted above the name, the default star, or nothing. A logo missing from a shared link falls back to the star.
+  if (logo) {
+    const fit = Math.min(130 / logo.naturalWidth, 80 / logo.naturalHeight)
+    ctx.drawImage(logo, 540 - logo.naturalWidth * fit / 2, 102 - logo.naturalHeight * fit / 2, logo.naturalWidth * fit, logo.naturalHeight * fit)
+  } else if (settings.emblem !== 'none') {
+    ctx.globalAlpha = 0.9
+    ctx.lineWidth = 2
+    ctx.save()
+    ctx.translate(540, 102)
+    for (let index = 0; index < 2; index++) {
+      ctx.rotate(Math.PI / 4)
+      ctx.strokeRect(-15, -15, 30, 30)
+    }
+    ctx.restore()
+    ctx.globalAlpha = 1
+  }
 
   const bilingual = settings.language === 'both'
   const arabicOnly = settings.language === 'ar'
@@ -214,9 +233,9 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
   const [error, setError] = useState('')
   useEffect(() => {
     let cancelled = false
-    loadFonts().then(() => {
+    Promise.all([loadFonts(), loadLogo(settings)]).then(([, logo]) => {
       if (cancelled || !canvasRef.current) return
-      drawProfile(canvasRef.current, settings, rows)
+      drawProfile(canvasRef.current, settings, rows, 1, logo)
       onFitWarning?.(canvasRef.current.dataset.fitWarning ?? '')
       setError('')
     }).catch(() => {
@@ -240,9 +259,9 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
 }
 
 export async function downloadProfile(settings: Settings, rows: DisplayRow[], scale = 1): Promise<void> {
-  await loadFonts()
+  const [, logo] = await Promise.all([loadFonts(), loadLogo(settings)])
   const canvas = document.createElement('canvas')
-  drawProfile(canvas, settings, rows, scale)
+  drawProfile(canvas, settings, rows, scale, logo)
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('The PNG could not be created. Please try again.')), 'image/png'))
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
