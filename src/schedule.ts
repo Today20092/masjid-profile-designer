@@ -186,6 +186,8 @@ export function getDisplayRows(settings: Settings): DisplayRow[] {
       const time = times[prayer.id]
       if (Number.isFinite(time.getTime())) {
         adhan = formatter.format(time)
+        // Sunrise has no iqamah; with one time column, show when it happens instead of a dash.
+        if (prayer.id === 'sunrise' && s.timeDisplay === 'iqamah') iqamah = adhan
         if (p.iqamahMode === 'after' && prayer.id !== 'sunrise') iqamah = formatter.format(new Date(time.getTime() + p.delay * 60_000))
       } else if (s.timeDisplay !== 'iqamah' || (p.iqamahMode === 'after' && !p.showRelative)) {
         throw new Error(`${prayer.en} cannot be calculated for this location and date. Use a fixed iqamah time or another location/date.`)

@@ -4,7 +4,7 @@
 
 Set the location coordinates, IANA timezone, calculation method, and Asr convention to match your masjid. Tampa starts with North America and standard Asr as editable examples, not as settings approved by Masjid Abu Bakr. Check calculated times against the masjid's practice before use.
 
-Adhan adjustments change the calculated start time by a number of minutes. A delayed iqamah follows that adjusted time. A fixed iqamah remains at the clock time you enter when you change the date. Jumu‘ah is entered separately. Sunrise is a calculated event and has no iqamah.
+Adhan adjustments change the calculated start time by a number of minutes. A delayed iqamah follows that adjusted time. A fixed iqamah remains at the clock time you enter when you change the date. Jumu‘ah is entered separately. Sunrise is a calculated event and has no iqamah; with one time column it shows its calculated time, and with both columns its iqamah shows a dash.
 
 For a delayed iqamah, enable **Show “7 minutes after adhan” on image** to publish the delay instead of that day's clock time. The wording follows your entered number of minutes and the artwork language. New designs enable this for Maghrib by default. Existing saved designs keep their current appearance until you enable it. This is useful when keeping the same group photo for a month; any displayed adhan clock times still apply only to the selected date.
 
@@ -18,11 +18,9 @@ Use **Edit times** and **Choose design** to jump to those controls. On a phone, 
 
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 
-Choose **Standard**, **Large**, or **Extra large** under **Prayer text size** to enlarge prayer names; times grow a little and stay smaller than about 1.35× the masjid name, so the name remains the headline. The layout adds row spacing and fits longer labels within the circle. With seven or eight rows, the space in the circle limits how much Large and Extra large can add. Your choice is saved in this browser and used for PNG exports.
+Choose **Standard**, **Large**, or **Extra large** under **Text size**. Larger sizes spread the table across more of the circle and enlarge prayer names most; times grow a little and stay below about 1.35× the masjid name. Rows narrow near the circle's edges to protect the crop. With seven or eight rows, the space in the circle limits how much Large and Extra large can add. Your choice is saved in this browser and used for PNG exports.
 
-Choose **Wide** under **Table width** to spread the prayer names and times across more of the circle, with larger lettering where space allows. Combine it with prayer text size. Rows narrow near the circle's edges to protect the crop. Existing saved designs keep **Standard** width.
-
-A message below the full preview warns when text has been substantially reduced to fit. Shorten names or labels, use fewer rows, or show one time column to give that text more room.
+A message below the full preview names any text that was substantially reduced to fit. Shorten it, use fewer rows, or show one time column to give that text more room.
 
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form colors, fonts, and logo controls are deferred. The editor's theme and the exported artwork are separate.
 

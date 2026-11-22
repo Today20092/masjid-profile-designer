@@ -37,7 +37,7 @@ function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number
     ctx.font = `${weight} ${size}px ${family}`
   }
   ctx.fillText(value, x, y, width)
-  if (size < intendedSize * 0.75) ctx.canvas.dataset.fitWarning = 'true'
+  if (size < intendedSize * 0.75 && !ctx.canvas.dataset.fitWarning) ctx.canvas.dataset.fitWarning = value
 }
 
 function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, arabic: boolean) {
@@ -64,12 +64,12 @@ function clockText(ctx: CanvasRenderingContext2D, value: string, x: number, y: n
     ctx.font = `700 ${pixels}px ${ENGLISH}`
     return ctx.measureText(value).width
   }
-  while (measure(clock[1], size) + measure(clock[2], size * 0.45) + size * 0.16 > width && size > 10) size -= 1
+  while (measure(clock[1], size) + measure(clock[2], size * 0.5) + size * 0.16 > width && size > 10) size -= 1
   const digitsWidth = measure(clock[1], size)
-  const suffixWidth = measure(clock[2], size * 0.45)
+  const suffixWidth = measure(clock[2], size * 0.5)
   const left = x - (digitsWidth + suffixWidth + size * 0.16) / 2
   text(ctx, clock[1], left + digitsWidth / 2, y, digitsWidth + 1, size, color, false, 700)
-  text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.45, color, false, 700)
+  text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.5, color, false, 700)
 }
 
 function relativeWording(minutes: number, language: Settings['language']) {
@@ -135,7 +135,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const nameY = bilingual ? 165 : 181
   lines.forEach((line, index) => text(ctx, line, 540, nameY + index * 43, index === 0 ? 560 : 650, bilingual ? 42 : 48, theme.ink, identityArabic, 700))
   if (bilingual && settings.nameAr) text(ctx, settings.nameAr, 540, lines.length > 1 ? 251 : 222, 650, 42, theme.gold, true, 700)
-  if (!bilingual && settings.location) text(ctx, settings.location, 540, lines.length > 1 ? 265 : 244, 600, 22, theme.muted)
+  if (!bilingual && settings.location) text(ctx, settings.location, 540, lines.length > 1 ? 265 : 245, 600, 26, theme.muted)
 
   ctx.strokeStyle = theme.gold
   ctx.globalAlpha = 0.5
@@ -164,7 +164,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   headings.forEach((heading, index) => text(ctx, heading, spread(timeX[index], headingScale), headingY, (bothColumns ? 165 : 260) * headingScale, (arabicOnly ? 28 : 20) * (wide ? 1.1 : 1), theme.gold, arabicOnly, 700))
   text(ctx, arabicOnly ? 'الصلاة' : 'PRAYER', spread(labelX, headingScale), headingY, 220 * headingScale, (arabicOnly ? 28 : 20) * (wide ? 1.1 : 1), theme.gold, arabicOnly, 700)
 
-  const gap = scale > 1 ? Math.min(79 * scale, 514 / Math.max(rows.length, 1)) : Math.min(79, 462 / Math.max(rows.length, 1))
+  const gap = scale > 1 ? Math.min(79 * scale, 514 / Math.max(rows.length, 1)) : Math.min(79, (rows.length > 6 ? 514 : 462) / rows.length)
   const firstY = 379 + (8 - Math.max(rows.length, 6)) * 5 + (wide ? 4 : 0)
   // The circle narrows at the top and bottom; size every row to the narrowest safe chord so bands line up.
   const lastY = firstY + (rows.length - 1) * gap
@@ -203,11 +203,11 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const date = new Date(`${settings.date}T12:00:00Z`)
   const dateFormat = new Intl.DateTimeFormat(arabicOnly ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   const dateLabel = settings.endDate && settings.endDate !== settings.date ? dateFormat.formatRange(date, new Date(`${settings.endDate}T12:00:00Z`)) : dateFormat.format(date)
-  text(ctx, dateLabel, 540, 914, 490, 25, theme.muted, arabicOnly)
+  text(ctx, dateLabel, 540, 914, 490, 28, theme.muted, arabicOnly)
   if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[\u0600-\u06ff]/.test(settings.footer))
 }
 
-export function ProfileArtwork({ settings, rows, className, onFitWarning }: { settings: Settings; rows: DisplayRow[]; className?: string; onFitWarning?: (warning: boolean) => void }) {
+export function ProfileArtwork({ settings, rows, className, onFitWarning }: { settings: Settings; rows: DisplayRow[]; className?: string; onFitWarning?: (shrunkText: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const descriptionId = useId()
   const [error, setError] = useState('')
@@ -216,7 +216,7 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
     loadFonts().then(() => {
       if (cancelled || !canvasRef.current) return
       drawProfile(canvasRef.current, settings, rows)
-      onFitWarning?.(canvasRef.current.dataset.fitWarning === 'true')
+      onFitWarning?.(canvasRef.current.dataset.fitWarning ?? '')
       setError('')
     }).catch(() => {
       if (!cancelled) setError('The preview could not load. Refresh the page and try again.')

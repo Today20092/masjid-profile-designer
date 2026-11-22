@@ -54,7 +54,10 @@ assert.notEqual(getDisplayRows(settings).find(row => row.id === 'maghrib')!.adha
 settings.use24Hour = false
 assert.equal(getDisplayRows(settings).find(row => row.id === 'jumuah')!.iqamah, '1:30 PM')
 settings.prayers.sunrise.enabled = true
+assert.equal(getDisplayRows(settings).find(row => row.id === 'sunrise')!.iqamah, getDisplayRows(settings).find(row => row.id === 'sunrise')!.adhan)
+settings.timeDisplay = 'both'
 assert.equal(getDisplayRows(settings).find(row => row.id === 'sunrise')!.iqamah, '—')
+settings.timeDisplay = 'iqamah'
 settings.customRows.push({ id: 'class', en: 'Class', ar: '', time: '00:05', enabled: true })
 const custom = getDisplayRows(settings).find(row => row.id === 'class')!
 assert.equal(custom.iqamah, '12:05 AM')
