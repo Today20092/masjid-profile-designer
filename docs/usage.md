@@ -22,11 +22,11 @@ Choose **Standard** or **Large** under **Text size**. Large spreads the table ac
 
 Under **Top symbol**, keep the small star above the masjid name, choose **None** to remove it, or choose **Your logo** to upload your masjid's logo (PNG, JPEG or WebP; a transparent background looks best). The logo is resized to 256px, saved in this browser, and included in settings files. Share links and AI links leave the logo out to stay short; someone opening such a link sees the star unless they have their own logo saved.
 
-A message below the full preview names any text that was substantially reduced to fit. Shorten it, use fewer rows, or show one time column to give that text more room.
+A message below the full preview names any text that was substantially reduced to fit; tap it to jump to the field that holds that text. Shorten it, use fewer rows, or show one time column to give that text more room.
 
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form fonts are deferred. The editor's theme and the exported artwork are separate.
 
-Download creates a square 1080px PNG with all essential content inside a circle. Under **Image size**, choose 2× (2160px) or 3× (3240px) for a sharper copy to print or show on a large screen; WhatsApp only needs 1×. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
+Download creates a square 1080px PNG with all essential content inside a circle. Under **Image size**, choose 2× (2160px) or 3× (3240px) for a sharper copy to print or show on a large screen; WhatsApp only needs 1×. On a phone that offers a share sheet, **Save to Photos or share** saves the image to Photos (where WhatsApp looks for a new group photo) or sends it to a chat. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
 
 The chat-list avatar is too small to read the full timetable. Open the group photo for the details. Fewer rows, one language, and a short masjid name leave more room for readable text.
 
