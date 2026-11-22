@@ -149,6 +149,9 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const wide = settings.tableWidth === 'wide'
   const typeBoost = wide ? 1.15 : 1
   const scale = settings.textSize === 'extra' ? 1.35 : settings.textSize === 'large' ? 1.18 : 1
+  // Bigger text sizes mostly enlarge prayer names; times grow at half the rate and never pass 1.35× the masjid name, so the name stays the headline.
+  const timeScale = 1 + (scale - 1) / 2
+  const timeCap = (bilingual ? 42 : 48) * 1.35
   const labelX = bothColumns ? 326 : 350
   const timeX = bothColumns ? (wide ? [570, 765] : scale > 1 ? [570, 790] : [598, 775]) : [716]
   const timeWidth = bothColumns ? (scale > 1 ? 190 : 162) : 290
@@ -184,16 +187,16 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
-    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.38 : 0.7))
+    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.42 : 0.7))
     text(ctx, primaryLabel, rowLabelX, secondaryLabel ? y - (wide ? gap * 0.2 : Math.min(13 * scale, gap * 0.25)) : y, labelWidth, labelSize, theme.ink, primaryArabic, 700)
-    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.24 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost, gap * (wide ? 0.36 : 0.43)), theme.ink, true, 700)
+    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.24 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost, gap * 0.43, labelSize), theme.ink, true, 700)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => {
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
       const valueX = spread(timeX[column], widthScale)
       if (relative) {
-        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.2 : 0.25) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * scale * typeBoost, gap * (wide ? 0.36 : 0.47)), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
-      } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * scale * typeBoost, gap * (wide ? 0.88 : 0.82)), column === values.length - 1 ? theme.gold : theme.ink)
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.2 : 0.25) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * timeScale * typeBoost, gap * (wide || bilingual ? 0.36 : 0.47)), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
+      } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * timeScale * typeBoost, gap * (wide ? 0.88 : 0.82), timeCap), column === values.length - 1 ? theme.gold : theme.ink)
     })
   })
 
