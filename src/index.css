@@ -115,6 +115,10 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .download-button { display: none; width: 100%; min-height: 52px; }
 .share-image-button { width: 100%; min-height: 48px; }
 .download-button + .share-image-button { margin-top: 8px; }
+.copy-timetable-button { width: 100%; min-height: 48px; }
+.share-image-button + .copy-timetable-button { margin-top: 8px; }
+@media (min-width: 900px) { .download-button + .copy-timetable-button { margin-top: 8px; } }
+.download-area .share-status + textarea { margin-top: 8px; }
 .download-area p { margin: 11px 0 0; color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.6; }
 .how-to { font-size: 0.875rem; line-height: 1.6; color: var(--muted-foreground); text-align: center; max-width: 350px; margin: 16px auto 0; }
 .editor-column { display: flex; flex-direction: column; gap: 16px; }
@@ -155,7 +159,7 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .prayer-main input { text-align: center; }
 .compact-value { min-width: 0; }
 .compact-value [data-slot="input"] { padding-inline: 7px; }
-.compact-value output { font-size: 0.8125rem; }
+.compact-value output { display: grid; place-items: center; min-height: 44px; padding-inline: 7px; border: 1px solid var(--input); border-radius: var(--radius-md); font-size: 1rem; text-align: center; }
 .delay-unit { display: block; margin-top: 2px; color: var(--muted-foreground); font-size: 0.75rem; text-align: center; }
 .prayer-options { justify-content: center; padding-inline: 7px; min-height: 44px; }
 .prayer-details { padding: 8px 0 16px 27px; gap: 14px; }
@@ -279,8 +283,9 @@ body:has(input:focus) .mobile-download { display: none; }
 .custom-colours { gap: 8px; margin-top: 4px; }
 .photo-palette > summary { align-content: center; min-height: 44px; cursor: pointer; color: var(--primary); font-size: 0.875rem; font-weight: 650; }
 .photo-palette > [data-slot="field"] { padding-top: 8px; }
+.photo-choose-button { align-self: start; min-height: 44px; max-width: 100%; white-space: normal; }
 .photo-message { overflow-wrap: anywhere; }
-.photo-message:empty { position: absolute; }
+.photo-message:empty { position: absolute; width: 1px; }
 .photo-palette .theme-option { gap: 5px; }
 .photo-palette .theme-check { bottom: 29px; }
 .colour-row { display: flex; gap: 8px; align-items: center; }

@@ -211,3 +211,36 @@ export function getDisplayRows(settings: Settings): DisplayRow[] {
   }
   return rows
 }
+
+export function relativeWording(minutes: number, language: Settings['language']) {
+  const english = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+  const arabic = minutes === 1 ? 'دقيقة واحدة' : minutes === 2 ? 'دقيقتان' : `${minutes} ${minutes >= 3 && minutes <= 10 ? 'دقائق' : 'دقيقة'}`
+  if (language === 'both') return [{ value: `${english} after adhan`, arabic: false }, { value: `${arabic} بعد الأذان`, arabic: true }]
+  return language === 'ar' ? [{ value: arabic, arabic: true }, { value: 'بعد الأذان', arabic: true }] : [{ value: english, arabic: false }, { value: 'after adhan', arabic: false }]
+}
+
+export function timetableDateLabel(settings: Settings) {
+  const date = new Date(`${settings.date}T12:00:00Z`)
+  const format = new Intl.DateTimeFormat(settings.language === 'ar' ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+  return settings.endDate && settings.endDate !== settings.date
+    ? format.formatRange(date, new Date(`${settings.endDate}T12:00:00Z`))
+    : format.format(date)
+}
+
+export function formatTimetable(settings: Settings, rows: DisplayRow[]) {
+  const { language, timeDisplay } = settings
+  const arabic = language === 'ar'
+  const bilingual = language === 'both'
+  const adhan = arabic ? 'الأذان' : 'Adhan'
+  const iqamah = arabic ? 'الإقامة' : 'Iqamah'
+  const title = timeDisplay === 'both' ? (arabic ? 'أوقات الصلاة' : 'Prayer timetable') : timeDisplay === 'adhan' ? adhan : iqamah
+  const name = arabic ? settings.nameAr || settings.name : settings.name || settings.nameAr
+  const header = [`${name.trim()} — ${title}`, bilingual && settings.name.trim() ? settings.nameAr.trim() : '', timetableDateLabel(settings)].filter(Boolean)
+  const lines = rows.map(row => {
+    const label = bilingual ? [row.en, row.ar].filter(Boolean).join(' / ') : arabic ? row.ar || row.en : row.en || row.ar
+    if (timeDisplay === 'adhan') return `${label} — ${row.adhan}`
+    const time = row.relativeMinutes === undefined ? row.iqamah : relativeWording(row.relativeMinutes, language).map(line => line.value).join(bilingual ? ' / ' : ' ')
+    return timeDisplay === 'iqamah' ? `${label} — ${time}` : `${label} — ${adhan} ${row.adhan} · ${iqamah} ${time}`
+  })
+  return [...header, '', ...lines].join('\n')
+}

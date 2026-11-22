@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { createDefaults, getDisplayRows, validateSettings } from '../src/schedule.ts'
+import { createDefaults, formatTimetable, getDisplayRows, validateSettings } from '../src/schedule.ts'
 import { THEME_IDS } from '../src/model.ts'
 
 const settings = createDefaults()
@@ -128,3 +128,12 @@ console.log('Schedule checks passed')
   assert.equal(settingsFromPatch({ name: 'X', customRows: [{ en: 'Jumuah 3', ar: '', time: '15:00' }] }).customRows[0].en, 'Jumu‘ah 3')
   console.log('AI design round trip ok')
 }
+
+const messageSettings = { ...settings, name: 'Test Masjid', nameAr: 'مسجد الاختبار', date: '2026-11-20', endDate: '2026-11-22' }
+const messageRows = [{ id: 'maghrib', en: 'Maghrib', ar: 'المغرب', adhan: '5:00 PM', iqamah: '5:10 PM', relativeMinutes: 10 }]
+const message = formatTimetable({ ...messageSettings, language: 'both', timeDisplay: 'both' }, messageRows)
+assert.match(message, /Test Masjid — Prayer timetable\nمسجد الاختبار\nNovember 20.*22, 2026\n\n/)
+assert.match(message, /Maghrib \/ المغرب — Adhan 5:00 PM · Iqamah 10 minutes after adhan \/ 10 دقائق بعد الأذان$/)
+assert.match(formatTimetable({ ...messageSettings, language: 'en', timeDisplay: 'adhan' }, messageRows), /Maghrib — 5:00 PM$/)
+assert.match(formatTimetable({ ...messageSettings, language: 'ar', timeDisplay: 'iqamah' }, messageRows), /المغرب — 10 دقائق بعد الأذان$/)
+console.log('Copy timetable formatting passed')

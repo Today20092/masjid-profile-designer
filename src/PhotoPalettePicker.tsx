@@ -1,8 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { Field, FieldDescription, FieldError } from '@/components/ui/field'
 import { readPhotoPalettes, type PhotoPalette } from './photo-palette'
 
 export function PhotoPalettePicker({ isApplied, onApply }: {
@@ -10,6 +9,7 @@ export function PhotoPalettePicker({ isApplied, onApply }: {
   onApply: (suggestion: PhotoPalette) => void
 }) {
   const latest = useRef(0)
+  const fileInput = useRef<HTMLInputElement>(null)
   const [suggestions, setSuggestions] = useState<PhotoPalette[]>([])
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -39,9 +39,12 @@ export function PhotoPalettePicker({ isApplied, onApply }: {
   return <details className="photo-palette">
     <summary>Make a palette from a photo</summary>
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor="palette-photo">Choose a photo or logo</FieldLabel>
-      <Input id="palette-photo" type="file" accept="image/png,image/jpeg,image/webp" onChange={readPhoto}
-        aria-invalid={Boolean(error)} aria-describedby={error ? 'palette-photo-help palette-photo-error' : 'palette-photo-help'} />
+      <Button type="button" variant="outline" size="lg" className="photo-choose-button"
+        aria-describedby={error ? 'palette-photo-help palette-photo-error' : 'palette-photo-help'}
+        onClick={() => fileInput.current?.click()}>
+        {suggestions.length ? 'Choose another photo' : 'Choose a photo or logo'}
+      </Button>
+      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={readPhoto} hidden />
       <FieldDescription id="palette-photo-help">PNG, JPEG or WebP, up to 10 MB. The image stays on your device.</FieldDescription>
       <div className="photo-message" role="alert">{error && <FieldError id="palette-photo-error">{error}</FieldError>}</div>
       <p className="share-status photo-message" role="status">{status}</p>
