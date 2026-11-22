@@ -99,6 +99,7 @@ export default function App() {
   const [pendingDownload, setPendingDownload] = useState(false)
   const [exportScale, setExportScale] = useState(1)
   const [aiNotice, setAiNotice] = useState('')
+  const [logoError, setLogoError] = useState('')
 
   useEffect(() => {
     const ai = readAiLink()
@@ -118,15 +119,42 @@ export default function App() {
   }, [initial.firstVisit])
 
   function acceptIncoming(use: boolean) {
-    if (use && incoming) { setSettings(incoming); setPendingDownload(incomingDownload); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}.${incomingDownload ? ' Your image is downloading.' : ''} Use Undo to return to your previous design.` }) }
+    // Links never carry the logo image, so keep this browser's logo when the design still asks for one.
+    if (use && incoming) { setSettings(incoming.emblem === 'logo' && !incoming.logo ? { ...incoming, logo: settings.logo } : incoming); setPendingDownload(incomingDownload); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}.${incomingDownload ? ' Your image is downloading.' : ''} Use Undo to return to your previous design.` }) }
     setIncoming(null); clearSharedCode()
   }
   async function copyLink() {
     if (!result.settings) return
     setShareNotice(''); setShareError('')
     const url = await shareLink(result.settings)
-    try { await navigator.clipboard.writeText(url); setShareNotice('Link copied. Anyone who opens it gets their own editable copy of this design.') }
+    try { await navigator.clipboard.writeText(url); setShareNotice(`Link copied. Anyone who opens it gets their own editable copy of this design.${result.settings.logo ? ' Links leave out your logo; save a settings file to share it.' : ''}`) }
     catch { window.prompt('Copy this link to share your design:', url) }
+  }
+  function setEmblem(emblem: Settings['emblem']) {
+    setLogoError('')
+    if (emblem === 'logo' && !settings.logo) { document.getElementById('logo-file')?.click(); return }
+    update('emblem', emblem)
+  }
+  async function uploadLogo(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setLogoError('')
+    try {
+      if (!file.type.startsWith('image/')) throw new Error('Choose an image file, such as a PNG or JPEG.')
+      if (file.size > 10_000_000) throw new Error('That image is over 10 MB. Choose a smaller one.')
+      // Shrink to 256px so the logo fits in browser storage and settings files; it is drawn at most 130px wide.
+      const bitmap = await createImageBitmap(file)
+      const fit = Math.min(1, 256 / Math.max(bitmap.width, bitmap.height))
+      const canvas = Object.assign(document.createElement('canvas'), { width: Math.round(bitmap.width * fit), height: Math.round(bitmap.height * fit) })
+      canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+      const webp = canvas.toDataURL('image/webp', 0.9)
+      const logo = webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png')
+      setSaved(false); setDownloaded(false); setExportError('')
+      setSettings(current => ({ ...current, emblem: 'logo', logo }))
+    } catch (error) {
+      setLogoError(error instanceof Error && !(error instanceof DOMException) ? error.message : 'That image could not be read. Try a PNG or JPEG.')
+    }
   }
   async function openFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -416,6 +444,10 @@ export default function App() {
               <Field><FieldLabel id="language-label">Language</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="language-label" value={[settings.language]} onValueChange={([value]) => { if (value === 'en' || value === 'ar' || value === 'both') update('language', value) }}><ToggleGroupItem value="en">English</ToggleGroupItem><ToggleGroupItem value="ar" lang="ar">العربية</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field>
               <Field><FieldLabel id="text-size-label">Text size</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="text-size-label" value={[settings.textSize]} onValueChange={([value]) => { if (value === 'standard' || value === 'large') update('textSize', value) }}><ToggleGroupItem value="standard">Standard</ToggleGroupItem><ToggleGroupItem value="large">Large</ToggleGroupItem></ToggleGroup><FieldDescription>Large spreads the table across the circle and uses the biggest text that fits.</FieldDescription></Field>
               <FieldGroup><Field><FieldLabel id="time-display-label">Times to show</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="time-display-label" value={[settings.timeDisplay]} onValueChange={([value]) => { if (value === 'iqamah' || value === 'adhan' || value === 'both') update('timeDisplay', value) }}><ToggleGroupItem value="iqamah">Iqamah</ToggleGroupItem><ToggleGroupItem value="adhan">Adhan</ToggleGroupItem><ToggleGroupItem value="both">Both</ToggleGroupItem></ToggleGroup></Field><Field><FieldLabel id="clock-label">Clock format</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="clock-label" value={[settings.use24Hour ? '24' : '12']} onValueChange={([value]) => { if (value) update('use24Hour', value === '24') }}><ToggleGroupItem value="12">12 hour</ToggleGroupItem><ToggleGroupItem value="24">24 hour</ToggleGroupItem></ToggleGroup></Field></FieldGroup>
+              <Field data-invalid={Boolean(logoError)}><FieldLabel id="emblem-label">Top symbol</FieldLabel><ToggleGroup variant="outline" className="segmented" aria-labelledby="emblem-label" value={[settings.emblem]} onValueChange={([value]) => { if (value === 'star' || value === 'logo' || value === 'none') setEmblem(value) }}><ToggleGroupItem value="star">Star</ToggleGroupItem><ToggleGroupItem value="logo">Your logo</ToggleGroupItem><ToggleGroupItem value="none">None</ToggleGroupItem></ToggleGroup>
+                <input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={uploadLogo} />
+                {settings.emblem === 'logo' && settings.logo && <div className="logo-choice"><img src={settings.logo} alt="Your logo" /><Button variant="outline" onClick={() => document.getElementById('logo-file')?.click()}><FileUp data-icon="inline-start" />Change logo</Button></div>}
+                {logoError ? <FieldError>{logoError}</FieldError> : <FieldDescription>Shown above the masjid name. A logo with a transparent background looks best.</FieldDescription>}</Field>
               <Field><FieldLabel htmlFor="footer">A small note <span className="optional">Optional</span></FieldLabel><Input id="footer" maxLength={80} placeholder="Please arrive a few minutes early" value={settings.footer} onChange={e => update('footer', e.target.value)} /></Field>
             </FieldGroup>
           </section>

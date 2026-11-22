@@ -18,6 +18,12 @@ assert.throws(() => validateSettings({ ...settings, customColor: 'red' }))
 { const { customColor: _c, customAccent: _a, ...legacy } = settings; assert.equal(validateSettings(legacy).customColor, '#1f5c4a') }
 assert.throws(() => validateSettings({ ...settings, theme: 'missing' }), /theme/)
 assert.throws(() => validateSettings({ ...settings, textSize: 'huge' }), /text size/)
+// Top symbol: older designs keep the star; a logo must be a small image data URL.
+{ const { emblem: _e, logo: _l, ...legacy } = settings; assert.equal(validateSettings(legacy).emblem, 'star') }
+assert.equal(validateSettings({ ...settings, emblem: 'none' }).emblem, 'none')
+assert.equal(validateSettings({ ...settings, emblem: 'logo', logo: 'data:image/png;base64,iVBORw0KGgo=' }).logo, 'data:image/png;base64,iVBORw0KGgo=')
+assert.throws(() => validateSettings({ ...settings, logo: 'https://example.com/logo.png' }), /logo/)
+assert.throws(() => validateSettings({ ...settings, emblem: 'crescent' }), /top symbol/)
 assert.equal(getDisplayRows(settings).find(row => row.id === 'dhuhr')?.iqamah, '13:45')
 assert.throws(() => validateSettings({ ...settings, date: '2026-02-30' }), /date/i)
 
