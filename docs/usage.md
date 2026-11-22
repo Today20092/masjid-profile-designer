@@ -32,9 +32,9 @@ The chat-list avatar is too small to read the full timetable. Open the group pho
 
 ## Making a design with an AI
 
-If you have a photo of your timetable, press **Copy request for AI**, paste the request into ChatGPT, Claude, Gemini or another AI that can read web pages, and attach the photo. The AI reads the site's [instructions for AI assistants](../public/llms.txt) and replies with a link. Opening it loads the design and downloads the image; you can keep editing on the page.
+Press **Copy request for AI**, paste the request into ChatGPT, Claude, Gemini, Grok or another AI that can read web pages, then attach a photo of your timetable or type the new times. The AI reads the site's [instructions for AI assistants](../public/llms.txt) and replies with a link, followed by the times it used. Opening the link loads the design and downloads the image; you can keep editing on the page. Once you have changed the sample design, the request includes your current design, so the AI updates it (keeping your name, theme and other choices) instead of starting over.
 
-To change settings by hand or with an AI chat, open **Edit as text** in the same section: **Copy for AI** copies the settings with instructions, and **Apply** takes back an answer, even one that only lists the changes.
+To change settings by hand or with an AI chat, open **Edit as text** in the same section. It shows the design in the same short form the AI uses: **Copy for AI** copies it with instructions, and **Apply** takes back an answer, even one that only lists the changes.
 
 If you already have a design saved in this browser, the page asks before replacing it, and Undo brings yours back. If the AI made a mistake, the page shows what is wrong; paste that message back to the AI for a corrected link. Check the times against your timetable before you post the image.
 

@@ -29,4 +29,4 @@ export type DisplayRow = { id: string; en: string; ar: string; adhan: string; iq
 export const MAX_ROWS = 8
 // Extra Jumu‘ah rows are custom rows named "Jumu‘ah 2", "Jumu‘ah 3"…; index n-1 holds the Arabic ordinal for Jumu‘ah n.
 export const JUMUAH_AR = ['الجمعة الأولى', 'الجمعة الثانية', 'الجمعة الثالثة', 'الجمعة الرابعة', 'الجمعة الخامسة', 'الجمعة السادسة', 'الجمعة السابعة', 'الجمعة الثامنة']
-export const isExtraJumuah = (en: string) => /^Jumu‘ah \d+$/.test(en)
+export const isExtraJumuah = (en: string) => /^Jumu['‘’ʼ`]?ah \d+$/i.test(en)
