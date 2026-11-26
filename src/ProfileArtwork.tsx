@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { DisplayRow, Settings, ThemeId } from './model'
 import { derivePalette, isLight } from './palette'
-import { relativeWording, timetableDateLabel } from './schedule'
+import { pairGroups, relativeWording, timetableDateLabel } from './schedule'
 
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
   emerald: { name: 'Emerald', background: '#103e36', surface: '#194b41', ink: '#fff8e8', muted: '#b6c9bc', gold: '#e5bd7c' },
@@ -184,20 +184,32 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const lastY = firstY + (rows.length - 1) * gap
   const edgeY = Math.max(Math.abs(firstY - gap / 2 - 540), Math.abs(lastY + gap / 2 - 540))
   const halfWidth = wide ? Math.min(450, Math.sqrt(500 ** 2 - edgeY ** 2) - 12) : 322
+  const band = (top: number, height: number, color: string, alpha: number) => {
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = color
+    ctx.beginPath()
+    ctx.roundRect(540 - halfWidth, top, halfWidth * 2, height, 12)
+    ctx.fill()
+    ctx.globalAlpha = 1
+  }
+  const faint = isLight(theme.background) ? 0.05 : 0.045
+  // Paired rows share one band, alternating accent and faint, so each khutbah reads with its iqamah.
+  const groups = pairGroups(rows)
+  const onAccent = new Set<number>()
+  groups?.forEach(({ start, size }, index) => {
+    const accent = index % 2 === 0
+    if (accent) for (let row = start; row < start + size; row++) onAccent.add(row)
+    band(firstY + start * gap - gap / 2 + 5, size * gap - 10, accent ? theme.gold : theme.ink, accent ? 0.14 : faint)
+  })
   rows.forEach((row, index) => {
     const y = firstY + index * gap
     const widthScale = halfWidth / 322
     const rowLabelX = spread(labelX, widthScale)
     const labelWidth = (bothColumns ? 200 : 246) * widthScale
     const valueWidth = timeWidth * widthScale
-    if (index % 2 === 0) {
-      ctx.globalAlpha = isLight(theme.background) ? 0.05 : 0.045
-      ctx.fillStyle = theme.ink
-      ctx.beginPath()
-      ctx.roundRect(540 - halfWidth, y - gap / 2 + 3, halfWidth * 2, gap - 6, 12)
-      ctx.fill()
-      ctx.globalAlpha = 1
-    }
+    if (!groups && index % 2 === 0) band(y - gap / 2 + 3, gap - 6, theme.ink, faint)
+    // Accent text drops below 4.5:1 on the accent band, so those times use ink.
+    const timeColor = onAccent.has(index) ? theme.ink : theme.gold
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
@@ -209,8 +221,8 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
       const valueX = spread(timeX[column], widthScale)
       if (relative) {
-        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.2 : 0.25) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * timeScale * typeBoost, gap * (wide || bilingual ? 0.36 : 0.47)), index === 0 ? theme.gold : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
-      } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * timeScale * typeBoost, gap * (wide ? 0.88 : 0.82), timeCap), column === values.length - 1 ? theme.gold : theme.ink)
+        relativeWording(row.relativeMinutes!, settings.language).forEach((line, index) => text(ctx, line.value, valueX, y + (wide ? (index === 0 ? -0.2 : 0.25) * gap : (index === 0 ? -14 : 20) * Math.min(scale, gap / 64)), valueWidth, Math.min((bilingual ? 28 : index === 0 ? 36 : 25) * timeScale * typeBoost, gap * (wide || bilingual ? 0.36 : 0.47)), index === 0 ? timeColor : theme.ink, line.arabic, line.arabic || index === 0 ? 700 : 500))
+      } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * timeScale * typeBoost, gap * (wide ? 0.88 : 0.82), timeCap), column === values.length - 1 ? timeColor : theme.ink)
     })
   })
 

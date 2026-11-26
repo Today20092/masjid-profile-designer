@@ -115,9 +115,10 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .download-button { display: none; width: 100%; min-height: 52px; }
 .share-image-button { width: 100%; min-height: 48px; }
 .download-button + .share-image-button { margin-top: 8px; }
-.copy-timetable-button { width: 100%; min-height: 48px; }
-.share-image-button + .copy-timetable-button { margin-top: 8px; }
-@media (min-width: 900px) { .download-button + .copy-timetable-button { margin-top: 8px; } }
+.copy-image-button, .copy-timetable-button { width: 100%; min-height: 48px; }
+.share-image-button + .copy-image-button { margin-top: 8px; }
+.download-area .share-status + .copy-timetable-button { margin-top: 8px; }
+@media (min-width: 900px) { .download-button + .copy-image-button { margin-top: 8px; } }
 .download-area .share-status + textarea { margin-top: 8px; }
 .download-area p { margin: 11px 0 0; color: var(--muted-foreground); font-size: 0.75rem; line-height: 1.6; }
 .how-to { font-size: 0.875rem; line-height: 1.6; color: var(--muted-foreground); text-align: center; max-width: 350px; margin: 16px auto 0; }

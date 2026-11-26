@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react'
-import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, Share, FileUp, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowDownToLine, Braces, Check, CircleHelp, Clock3, Copy, FileDown, Share, FileUp, Image as ImageIcon, Link, LocateFixed, LockKeyhole, Moon, Plus, RotateCcw, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -176,6 +176,19 @@ export default function App() {
   const timetableText = result.settings ? formatTimetable(result.settings, result.rows) : ''
   const copyFeedback = timetableText && timetableCopy?.text === timetableText ? timetableCopy : null
 
+  // Keyed on the rendered result and size, so the message clears after the next edit.
+  const [imageCopy, setImageCopy] = useState<{ of: unknown; scale: number; copied: boolean } | null>(null)
+  const imageFeedback = imageCopy && imageCopy.of === result && imageCopy.scale === exportScale ? imageCopy : null
+  async function copyImage() {
+    if (!result.settings || exporting) return
+    setExporting(true); setImageCopy(null); setExportError('')
+    try {
+      // The promise goes straight into ClipboardItem: Safari only allows a write started by the click itself.
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': renderProfile(result.settings, result.rows, exportScale) })])
+      setImageCopy({ of: result, scale: exportScale, copied: true })
+    } catch { setImageCopy({ of: result, scale: exportScale, copied: false }) }
+    finally { setExporting(false) }
+  }
   async function copyTimetable() {
     if (!timetableText) return
     try {
@@ -369,6 +382,8 @@ export default function App() {
             <div><strong>{settings.name || 'Your masjid'}</strong><p>Open the group photo to read the timetable.</p></div>
           </div><Separator />
           <div className="download-area"><Button size="lg" className="download-button" disabled={!result.settings || exporting} onClick={download}>{exporting ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <ArrowDownToLine data-icon="inline-start" />}{downloadLabel}</Button>{canShareImage && <Button size="lg" variant="outline" className="share-image-button" disabled={!result.settings || exporting} onClick={shareImage}><Share data-icon="inline-start" />Save to Photos or share</Button>}
+            <Button size="lg" type="button" variant="outline" className="copy-image-button" disabled={!result.settings || exporting} onClick={copyImage}><ImageIcon data-icon="inline-start" aria-hidden="true" />Copy image</Button>
+            <p className="share-status" role="status">{imageFeedback && (imageFeedback.copied ? 'Image copied. Paste it into your chat.' : 'This browser could not copy the image. Use Download PNG instead.')}</p>
             <Button size="lg" type="button" variant="outline" className="copy-timetable-button" disabled={!timetableText} onClick={copyTimetable}><Copy data-icon="inline-start" aria-hidden="true" />Copy timetable</Button>
             <p className="share-status" role="status">{copyFeedback && (copyFeedback.copied ? 'Timetable copied. Paste it into your group chat.' : 'Clipboard access is blocked. Select and copy the timetable below.')}</p>
             {copyFeedback && !copyFeedback.copied && <Textarea aria-label="Timetable text" dir="auto" readOnly rows={5} value={timetableText} />}
