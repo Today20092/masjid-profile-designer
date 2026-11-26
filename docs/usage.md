@@ -24,9 +24,11 @@ Under **Top symbol**, keep the small star above the masjid name, choose **None**
 
 A message below the full preview names any text that was substantially reduced to fit; tap it to jump to the field that holds that text. Shorten it, use fewer rows, or show one time column to give that text more room.
 
+When the whole timetable is Khutbah and Iqamah pairs (for example “Jumuah 1 Khutbah”, “Jumuah 1 Iqamah”, then the same for Jumuah 2), each pair shares one colour band. The bands alternate between the accent colour and a faint shade so the services are easy to tell apart.
+
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form fonts are deferred. The editor's theme and the exported artwork are separate.
 
-Download creates a square 1080px PNG with all essential content inside a circle. Under **Image size**, choose 2× (2160px) or 3× (3240px) for a sharper copy to print or show on a large screen; WhatsApp only needs 1×. On a phone that offers a share sheet, **Save to Photos or share** saves the image to Photos (where WhatsApp looks for a new group photo) or sends it to a chat. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
+Download creates a square 1080px PNG with all essential content inside a circle. Under **Image size**, choose 2× (2160px) or 3× (3240px) for a sharper copy to print or show on a large screen; WhatsApp only needs 1×. **Copy image** puts the same PNG on the clipboard to paste into a chat or document; if the browser does not allow that, use Download PNG. On a phone that offers a share sheet, **Save to Photos or share** saves the image to Photos (where WhatsApp looks for a new group photo) or sends it to a chat. In WhatsApp, open your group information, edit the group photo, choose the downloaded image, and keep the full square centered in the crop. Group permissions may require an administrator to change the photo.
 
 The chat-list avatar is too small to read the full timetable. Open the group photo for the details. Fewer rows, one language, and a short masjid name leave more room for readable text.
 

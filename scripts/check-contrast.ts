@@ -15,6 +15,8 @@ for (const [, name, bg, surface, ink, muted, gold] of themes) {
     const worst = Math.min(...grounds.map(g => contrast(colour, g)))
     assert.ok(worst >= 4.5, `${name} ${role} ${colour} is ${worst.toFixed(2)}:1, needs 4.5:1`)
   }
+  // Paired rows: every other group sits on a 14% accent band, with ink text only.
+  assert.ok([bg, surface].every(g => contrast(ink, mix(gold, g, 0.14)) >= 4.5), `${name} ink on the accent band`)
 }
 console.log(`Artwork contrast ok (${themes.length} themes)`)
 
@@ -30,6 +32,7 @@ for (const colour of samples) for (const accent of ['', '#ffd700', '#0066ff', co
     const worst = Math.min(...grounds.map(g => contrast(c, g)))
     assert.ok(worst >= 4.5, `custom ${colour}/${accent || 'auto'} ${role} ${c} is ${worst.toFixed(2)}:1`)
   }
+  assert.ok([p.background, p.surface].every(g => contrast(p.ink, mix(p.gold, g, 0.14)) >= 4.5), `custom ${colour}/${accent || 'auto'} ink on the accent band`)
   if (!accent && !p.adjusted) assert.equal(p.background, colour, 'unadjusted palette keeps the chosen colour')
   if (p.adjusted) adjusted++
 }

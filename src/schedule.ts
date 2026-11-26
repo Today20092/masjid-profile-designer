@@ -227,6 +227,19 @@ export function timetableDateLabel(settings: Settings) {
     : format.format(date)
 }
 
+// Khutbah/iqamah pairs ("Jumuah 1 Khutbah", "Jumuah 1 Iqamah"): neighbouring rows whose labels differ only by that word.
+// Null unless every row belongs to such a group and there are at least two, so other timetables keep row-by-row bands.
+export function pairGroups(rows: DisplayRow[]) {
+  const groups: { key: string; start: number; size: number }[] = []
+  rows.forEach((row, start) => {
+    const key = (row.en || row.ar).replace(/\b(?:khutbah?|iqamah?|adhan|salah|prayer)\b|الخطبة|خطبة|الإقامة|إقامة|الأذان/gi, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
+    const last = groups.at(-1)
+    if (last?.key === key) last.size++
+    else groups.push({ key, start, size: 1 })
+  })
+  return groups.length > 1 && groups.every(group => group.key && group.size > 1) ? groups : null
+}
+
 export function formatTimetable(settings: Settings, rows: DisplayRow[]) {
   const { language, timeDisplay } = settings
   const arabic = language === 'ar'

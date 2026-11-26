@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { createDefaults, formatTimetable, getDisplayRows, validateSettings } from '../src/schedule.ts'
+import { createDefaults, formatTimetable, getDisplayRows, pairGroups, validateSettings } from '../src/schedule.ts'
 import { THEME_IDS } from '../src/model.ts'
 
 const settings = createDefaults()
@@ -137,3 +137,12 @@ assert.match(message, /Maghrib \/ المغرب — Adhan 5:00 PM · Iqamah 10 mi
 assert.match(formatTimetable({ ...messageSettings, language: 'en', timeDisplay: 'adhan' }, messageRows), /Maghrib — 5:00 PM$/)
 assert.match(formatTimetable({ ...messageSettings, language: 'ar', timeDisplay: 'iqamah' }, messageRows), /المغرب — 10 دقائق بعد الأذان$/)
 console.log('Copy timetable formatting passed')
+const labelled = (...labels: string[]) => labels.map(en => ({ ...messageRows[0], en, ar: '' }))
+assert.deepEqual(pairGroups(labelled('Jumuah 1 Khutbah', 'Jumuah 1 Iqamah', 'Jumuah 2 Khutbah', 'Jumuah 2 Iqamah'))?.map(g => [g.start, g.size]), [[0, 2], [2, 2]])
+const arabicPairs = ['خطبة الجمعة 1', 'إقامة الجمعة 1', 'خطبة الجمعة 2', 'إقامة الجمعة 2'].map(ar => ({ ...messageRows[0], en: '', ar }))
+assert.equal(pairGroups(arabicPairs)?.length, 2)
+assert.equal(pairGroups(labelled('Fajr', 'Jumuah 1 Khutbah', 'Jumuah 1 Iqamah')), null)
+assert.equal(pairGroups(labelled('Jumu‘ah 1', 'Jumu‘ah 2')), null)
+assert.equal(pairGroups(labelled('Jumuah Khutbah', 'Jumuah Iqamah')), null)
+assert.equal(pairGroups(labelled('Khutbah', 'Iqamah', 'Khutbah', 'Iqamah')), null)
+console.log('Paired row grouping passed')
