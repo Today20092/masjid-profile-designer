@@ -10,6 +10,8 @@ export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string;
   plum: { name: 'Plum', background: '#32223f', surface: '#463052', ink: '#fff6ed', muted: '#d4c0db', gold: '#e6c28f' },
   rose: { name: 'Rose', background: '#f5e8e5', surface: '#fff5f0', ink: '#542d3b', muted: '#78505d', gold: '#8b4056' },
   charcoal: { name: 'Charcoal', background: '#25292b', surface: '#343a3c', ink: '#fff9ed', muted: '#cad0ca', gold: '#e0c595' },
+  sky: { name: 'Sky', background: '#e4f0f2', surface: '#f2f9f8', ink: '#173b4a', muted: '#415d66', gold: '#17605f' },
+  terracotta: { name: 'Terracotta', background: '#f3e4d5', surface: '#fff3e6', ink: '#542e23', muted: '#705044', gold: '#88432b' },
 }
 
 const SIZE = 1080

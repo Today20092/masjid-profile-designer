@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { Check, Image as ImageIcon, Moon, Pencil } from 'lucide-react'
+import { Check, Image as ImageIcon, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -87,10 +87,10 @@ export function ThemeField({ settings, customPalette, onChange, children }: {
     <Field>
       <FieldLabel id="theme-label">Choose a theme</FieldLabel>
       <ToggleGroup className="theme-options" aria-labelledby="theme-label" value={[selected]} onValueChange={([value]) => { if (value) select(value) }}>
-        {THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><Swatch palette={ARTWORK_THEMES[theme]} icon={<Moon />} /><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}
+        {THEME_IDS.map(theme => <ToggleGroupItem key={theme} value={theme} className="theme-option"><span className="theme-swatch timetable-swatch" style={{ background: ARTWORK_THEMES[theme].background, color: ARTWORK_THEMES[theme].ink }} aria-hidden="true"><strong style={{ color: ARTWORK_THEMES[theme].gold }}>PRAYER</strong><span>Fajr <b>6:15</b></span><span>Asr <b>4:30</b></span></span><span>{ARTWORK_THEMES[theme].name}</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>)}
         <ToggleGroupItem value="photo" className="theme-option">
           {shown ? <Swatch palette={shown.palette} icon={<ImageIcon />} /> : <span className="theme-swatch photo-empty" aria-hidden="true"><ImageIcon /></span>}
-          <span>Photo</span><Check className="theme-check" aria-hidden="true" />
+          <span>Colors from photo</span><Check className="theme-check" aria-hidden="true" />
         </ToggleGroupItem>
         <ToggleGroupItem value="custom" className="theme-option"><Swatch palette={customPalette} icon={<Pencil />} /><span>Custom</span><Check className="theme-check" aria-hidden="true" /></ToggleGroupItem>
       </ToggleGroup>
