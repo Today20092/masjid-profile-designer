@@ -38,7 +38,7 @@ Press **Copy request for AI**, paste the request into ChatGPT, Claude, Gemini, G
 
 To change settings by hand or with an AI chat, open **Edit as text** in the same section. It shows the design in the same short form the AI uses: **Copy for AI** copies it with instructions, and **Apply** takes back an answer, even one that only lists the changes.
 
-If you already have a design saved in this browser, the page asks before replacing it, and Undo brings yours back. If the AI made a mistake, the page shows what is wrong; paste that message back to the AI for a corrected link. Check the times against your timetable before you post the image.
+If you already have a design saved in this browser, a pop-up shows the new design and asks before replacing yours; Undo brings yours back. Share links ask the same way. If the AI made a mistake, the page shows what is wrong; paste that message back to the AI for a corrected link. Check the times against your timetable before you post the image.
 
 The design travels after the `#` in the link, which browsers do not send to the website. The photo goes only to the AI you chose.
 

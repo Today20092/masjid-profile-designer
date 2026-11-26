@@ -29,6 +29,9 @@ function restore() {
   }
 }
 
+const showAsModal = (dialog: HTMLDialogElement | null) => { if (dialog && !dialog.open) dialog.showModal() }
+const revealNotice = (notice: HTMLDivElement | null) => { notice?.scrollIntoView({ block: 'nearest' }) }
+
 function NumberField({ id, label, value, onChange, min, max, step = 1, compact = false }: {
   id: string; label: string; value: number; onChange: (value: number) => void; min: number; max: number; step?: number | 'any'; compact?: boolean
 }) {
@@ -104,25 +107,40 @@ export default function App() {
   const [logoError, setLogoError] = useState('')
 
   useEffect(() => {
+    function openLink(firstVisit: boolean) {
     const ai = readAiLink()
     const code = readSharedCode()
     if (!ai && !code) return
+    setLinkMessage(null)
     const opened = ai ? Promise.resolve().then(() => decodeAiDesign(ai.json)) : decodeSettings(code!)
     opened.then(shared => {
       const download = Boolean(ai?.download)
       if (ai) setExportScale(ai.scale)
       // A first-time visitor has nothing to lose, so open the shared design straight away.
-      if (initial.firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setPendingDownload(download); setLinkMessage({ ok: true, text: `Opened the ${ai ? '' : 'shared '}design for ${shared.name}.${download ? ' Your image is downloading; if it does not start, press Download.' : ''} Your changes save on this browser.` }) }
+      if (firstVisit) { dispatch({ type: 'edit', next: shared }); clearSharedCode(); setPendingDownload(download); setLinkMessage({ ok: true, text: `Opened the ${ai ? '' : 'shared '}design for ${shared.name}.${download ? ' Your image is downloading; if it does not start, press Download.' : ''} Your changes save on this browser.` }) }
       else { setIncoming(shared); setIncomingDownload(download) }
     }, error => {
       clearSharedCode()
       setLinkMessage({ ok: false, text: ai ? `This AI link could not be opened: ${error instanceof Error ? error.message : 'the design is not valid.'} Your current design was kept. Send this message back to the AI so it can fix the link.` : 'This design link is damaged or incomplete, so your current design was kept. Ask for the link again.' })
     })
+    }
+    openLink(initial.firstVisit)
+    // A link opened in a tab that already shows the page changes only the fragment, without a reload.
+    const reopen = () => openLink(false)
+    window.addEventListener('hashchange', reopen)
+    return () => window.removeEventListener('hashchange', reopen)
   }, [initial.firstVisit])
 
+  // Links never carry the logo image, so keep this browser's logo when the design still asks for one.
+  const incomingPreview = useMemo(() => {
+    if (!incoming) return null
+    const next = incoming.emblem === 'logo' && !incoming.logo ? { ...incoming, logo: settings.logo } : incoming
+    // Times that cannot be calculated leave the preview empty; the page explains the problem once the design is open.
+    try { return { settings: next, rows: getDisplayRows(next) } } catch { return { settings: next, rows: [] } }
+  }, [incoming, settings.logo])
+
   function acceptIncoming(use: boolean) {
-    // Links never carry the logo image, so keep this browser's logo when the design still asks for one.
-    if (use && incoming) { setSettings(incoming.emblem === 'logo' && !incoming.logo ? { ...incoming, logo: settings.logo } : incoming); setPendingDownload(incomingDownload); setLinkMessage({ ok: true, text: `Opened the shared design for ${incoming.name}.${incomingDownload ? ' Your image is downloading.' : ''} Use Undo to return to your previous design.` }) }
+    if (use && incomingPreview) { setSettings(incomingPreview.settings); setPendingDownload(incomingDownload); setLinkMessage({ ok: true, text: `Opened the shared design for ${incomingPreview.settings.name}.${incomingDownload ? ' Your image is downloading.' : ''} Use Undo to return to your previous design.` }) }
     setIncoming(null); clearSharedCode()
   }
   async function copyLink() {
@@ -369,6 +387,14 @@ export default function App() {
     </header>
     <main id="main" className="studio-shell" data-preview-pinned={previewPinned} onBlurCapture={() => dispatch({ type: 'end-group' })}>
       <section className="intro"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#times-heading">Edit times</a><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#appearance-heading">Choose design</a></nav></section>
+      {linkMessage && <div ref={revealNotice} className="notices link-notice" aria-live="polite"><Alert variant={linkMessage.ok ? 'default' : 'destructive'}>{linkMessage.ok ? <Check /> : <CircleHelp />}<AlertTitle>{linkMessage.ok ? 'Shared design opened' : 'Design not opened'}</AlertTitle><AlertDescription>{linkMessage.text}</AlertDescription></Alert></div>}
+      {/* Asked in a modal over the page, with the design shown, so a tapped link is answered before anything else. Esc and Back keep the current design. */}
+      {incomingPreview && <dialog ref={showAsModal} className="incoming-dialog" aria-labelledby="incoming-title" onClose={() => acceptIncoming(false)}>
+        <h2 id="incoming-title">Use the shared design for {incomingPreview.settings.name}?</h2>
+        <p>This link wants to replace the design on this screen. You can Undo afterwards.</p>
+        <div className="incoming-artwork"><ProfileArtwork settings={incomingPreview.settings} rows={incomingPreview.rows} /></div>
+        <div className="share-choice"><Button size="lg" onClick={() => acceptIncoming(true)}>Use shared design</Button><Button size="lg" variant="outline" onClick={() => acceptIncoming(false)}>Keep my design</Button></div>
+      </dialog>}
       <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title"><div className="preview-sticky">
           <div className="section-topline"><h2 id="preview-title" tabIndex={-1}>Your profile image</h2><span className="live-label"><span />Live preview</span></div>
@@ -401,10 +427,6 @@ export default function App() {
               <li><a href="#appearance-heading">Choose a design</a>, then download your image</li>
             </ol>
           </section>}
-          {(incoming || linkMessage) && <div className="notices" aria-live="polite">
-            {incoming && <Alert><Link /><AlertTitle>You opened a shared design for {incoming.name}</AlertTitle><AlertDescription>Your own design is still saved on this browser.<div className="share-choice"><Button onClick={() => acceptIncoming(true)}>Use shared design</Button><Button variant="outline" onClick={() => acceptIncoming(false)}>Keep my design</Button></div></AlertDescription></Alert>}
-            {linkMessage && <Alert variant={linkMessage.ok ? 'default' : 'destructive'}>{linkMessage.ok ? <Check /> : <CircleHelp />}<AlertTitle>{linkMessage.ok ? 'Shared design opened' : 'Design not opened'}</AlertTitle><AlertDescription>{linkMessage.text}</AlertDescription></Alert>}
-          </div>}
           {(storageNotice || result.error || exportError) && <div className="notices" id="settings-errors" tabIndex={-1}>
             {storageNotice && <Alert><CircleHelp /><AlertTitle>Browser storage</AlertTitle><AlertDescription>{storageNotice}{storageBlocked && <Button variant="outline" className="storage-acknowledge" onClick={() => setStorageBlocked(false)}>Use starting design and replace saved data</Button>}</AlertDescription></Alert>}
             {result.error && <Alert variant="destructive" role={undefined}><CircleHelp /><AlertTitle>Check your settings</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert>}
