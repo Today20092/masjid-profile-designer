@@ -90,7 +90,6 @@ export default function App() {
   const [fitWarning, setFitWarning] = useState('')
   const [editingColour, setEditingColour] = useState<'main' | 'accent'>('main')
   const customPalette = useMemo(() => derivePalette(settings.customColor, settings.customAccent), [settings.customColor, settings.customAccent])
-  const [startOpen, setStartOpen] = useState(initial.firstVisit && !readSharedCode() && !readAiLink())
   const [incoming, setIncoming] = useState<Settings | null>(null)
   const [shareNotice, setShareNotice] = useState('')
   const [shareError, setShareError] = useState('')
@@ -271,6 +270,7 @@ ${url}` })
   }
   const sample = createDefaults()
   const isSample = settings.name === sample.name && settings.location === sample.location
+  const exampleTimes = PRAYERS.every(({ id }) => (['iqamahMode', 'fixed', 'delay'] as const).every(key => settings.prayers[id][key] === sample.prayers[id][key]))
   const numberedJumuah = settings.customRows.some(row => row.enabled && isExtraJumuah(row.en))
   const enabledCount = PRAYERS.filter(item => settings.prayers[item.id].enabled).length + settings.customRows.filter(row => row.enabled).length
 
@@ -308,7 +308,7 @@ ${url}` })
   }
   function useLocation() {
     setLocationNotice(''); setLocationError('')
-    if (!navigator.geolocation) { setLocationError('Location is unavailable in this browser. Enter the coordinates below.'); return }
+    if (!navigator.geolocation) { setLocationError('Location is unavailable in this browser. Enter coordinates in the calculation settings.'); return }
     setLocating(true)
     navigator.geolocation.getCurrentPosition(position => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -318,7 +318,7 @@ ${url}` })
       setSettings(current => ({ ...current, latitude: Number(position.coords.latitude.toFixed(6)), longitude: Number(position.coords.longitude.toFixed(6)), timezone }))
       setLocating(false)
       setLocationNotice(`Coordinates updated. Timezone is ${timezone}, from your device. Check that it matches the masjid, and update the location label.`)
-    }, () => { setLocating(false); setLocationError('Location could not be accessed. Allow location in your browser or enter coordinates below.') }, { timeout: 15000, maximumAge: 300000 })
+    }, () => { setLocating(false); setLocationError('Location could not be accessed. Allow location in your browser, or enter coordinates in the calculation settings.') }, { timeout: 15000, maximumAge: 300000 })
   }
   function reset() {
     setSettings(createDefaults()); setStorageBlocked(false); setStorageNotice(''); setDownloaded(false); setExportError('')
@@ -439,14 +439,6 @@ ${url}` })
         </div></section>
         <section className="editor-column" aria-label="Customize your timetable">
           {previewPinned && <aside className="mobile-edit-preview" id="editing-preview" aria-label="Preview while editing"><div className="editing-artwork" aria-hidden="true">{result.settings ? <ProfileArtwork settings={result.settings} rows={result.rows} /> : <p>Fix your settings to see the preview.</p>}</div><div><strong>Live preview</strong><p>Your changes appear here.</p><a className={buttonVariants({ variant: 'link' })} href="#preview-title" onClick={() => setPreviewPinned(false)}>Full image</a><Button variant="outline" onClick={() => setPreviewPinned(false)}>Close preview</Button></div></aside>}
-          {startOpen && <section className="editor-section start-card">
-            <div className="editor-heading"><div><h2 id="start-heading">Start here</h2><p>Three steps to your masjid’s profile image. Everything else is optional.</p></div><Button variant="ghost" size="icon" className="start-dismiss" aria-label="Close Start here" onClick={() => setStartOpen(false)}><X /></Button></div>
-            <ol className="start-steps">
-              <li><a href="#name" onClick={() => requestAnimationFrame(() => document.getElementById('name')?.focus())}>Enter your masjid’s name</a></li>
-              <li><Button variant="link" className="start-link" disabled={locating} onClick={useLocation}>Use my location for prayer times</Button></li>
-              <li><a href="#appearance-heading">Choose a design</a>, then download your image</li>
-            </ol>
-          </section>}
           {(storageNotice || result.error || exportError) && <div className="notices" id="settings-errors" tabIndex={-1}>
             {storageNotice && <Alert><CircleHelp /><AlertTitle>Browser storage</AlertTitle><AlertDescription>{storageNotice}{storageBlocked && <Button variant="outline" className="storage-acknowledge" onClick={() => setStorageBlocked(false)}>Use starting design and replace saved data</Button>}</AlertDescription></Alert>}
             {result.error && <Alert variant="destructive" role={undefined}><CircleHelp /><AlertTitle>Check your settings</AlertTitle><AlertDescription>{result.error}</AlertDescription></Alert>}
@@ -473,7 +465,11 @@ ${url}` })
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="times-heading" tabIndex={-1}>Prayer times</h2></div><span className="row-count">{enabledCount}/{MAX_ROWS} rows</span></div>
             <p className="section-description">Edit iqamah times below. Open a prayer’s options for delays and adhan adjustments.</p>
-            <div className="calculation-summary"><p>Adhan is calculated. Confirm the location and method, and use your masjid’s iqamah times.</p><a className={buttonVariants({ variant: 'link' })} href="#calculation-settings" onClick={() => setCalculationOpen(true)}>Review calculation settings</a></div>
+            <div className="calculation-summary"><p>Adhan is calculated. Confirm the location and method, and use your masjid’s iqamah times.</p>
+              <div className="calculation-actions"><Button variant="outline" disabled={locating} onClick={useLocation}>{locating ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <LocateFixed data-icon="inline-start" />}{locating ? 'Finding your location…' : 'Use my location'}</Button><a className={buttonVariants({ variant: 'link' })} href="#calculation-settings" onClick={() => setCalculationOpen(true)}>Review calculation settings</a></div>
+              <p role="status" className="location-status">{locationNotice}</p>{locationError && <FieldError>{locationError}</FieldError>}
+            </div>
+            {exampleTimes && <p className="example-times">These are example times. Enter your masjid’s.</p>}
             <FieldSet className="prayer-rows"><FieldLegend className="sr-only">Prayers to display</FieldLegend>
               {PRAYERS.map(item => {
                 const row = settings.prayers[item.id]
@@ -546,8 +542,6 @@ ${url}` })
           </section>
           <section className="editor-section advanced-section" id="calculation-settings"><Accordion value={calculationOpen ? ['location'] : []} onValueChange={value => setCalculationOpen(value.includes('location'))}><AccordionItem value="location"><AccordionTrigger><span className="advanced-title"><LocateFixed aria-hidden="true" /><span>Location & calculation<span>For automatic adhan times</span></span></span></AccordionTrigger><AccordionContent><FieldGroup className="advanced-fields">
             <p className="section-description">Starting settings are North America (ISNA), standard Asr. These are editable defaults, not settings approved by your masjid.</p>
-            <Button variant="outline" disabled={locating} onClick={useLocation}>{locating ? <Spinner data-icon="inline-start" role={undefined} aria-label={undefined} aria-hidden /> : <LocateFixed data-icon="inline-start" />}{locating ? 'Finding your location…' : 'Use my device location'}</Button>
-            {locationNotice && <p role="status" className="location-status">{locationNotice}</p>}{locationError && <FieldError>{locationError}</FieldError>}
             <FieldGroup className="two-fields"><NumberField id="latitude" label="Latitude" min={-90} max={90} step="any" value={settings.latitude} onChange={value => update('latitude', value)} /><NumberField id="longitude" label="Longitude" min={-180} max={180} step="any" value={settings.longitude} onChange={value => update('longitude', value)} /></FieldGroup>
             <Field data-invalid={errorTarget === 'timezone'}><FieldLabel htmlFor="timezone">Masjid timezone</FieldLabel><Input id="timezone" aria-invalid={errorTarget === 'timezone'} aria-describedby={errorTarget === 'timezone' ? 'timezone-error timezone-help' : 'timezone-help'} placeholder="America/New_York" list="timezones" autoComplete="off" value={settings.timezone} onChange={e => update('timezone', e.target.value)} /><datalist id="timezones">{Intl.supportedValuesOf('timeZone').map(zone => <option key={zone} value={zone} />)}</datalist><FieldDescription id="timezone-help">Use region/city, such as America/New_York for Tampa. Device location fills this automatically; check it matches your masjid.</FieldDescription>{errorTarget === 'timezone' && <FieldError id="timezone-error">{result.error}</FieldError>}</Field>
             <Choice id="method" label="Calculation method" value={settings.method} options={methods} onChange={value => update('method', value)} /><Choice id="madhab" label="Asr convention" value={settings.madhab} options={[{ value: 'standard', label: 'Standard (Shafi‘i, Maliki, Hanbali)' }, { value: 'hanafi', label: 'Hanafi' }]} onChange={value => update('madhab', value)} />
