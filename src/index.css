@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./components/ui/variants.css";
-@source not "../.agents";
 
 @custom-variant dark (&:is(.dark *));
 @theme inline {
