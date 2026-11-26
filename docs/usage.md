@@ -18,6 +18,8 @@ Use **Edit times** and **Choose design** to jump to those controls. On a phone, 
 
 Choose English, Arabic, or bilingual labels. Select iqamah, adhan, or both columns. Enable up to eight rows, including any custom rows. Keep the masjid name and footer short for readability at profile-photo size.
 
+Under **Font style**, choose **Clear** (the default, Almarai), **Classic** (Manrope with Noto Naskh Arabic, the earlier look) or **Bold** (Alexandria). It changes the lettering in the picture only, and times stay in Manrope. Designs and links saved before this choice existed open as Clear; pick Classic to get the earlier look back.
+
 Choose **Standard** or **Large** under **Text size**. Large spreads the table across more of the circle and uses the biggest text that fits: prayer names grow most, and times stay below about 1.35× the masjid name. Rows narrow near the circle's edges to protect the crop. Designs saved with the old Extra large size open as Large. Your choice is saved in this browser and used for PNG exports.
 
 Under **Top symbol**, keep the small star above the masjid name, choose **None** to remove it, or choose **Your logo** to upload your masjid's logo (PNG, JPEG or WebP; a transparent background looks best). The logo is resized to 256px, saved in this browser, and included in settings files. Share links and AI links leave the logo out to stay short; someone opening such a link sees the star unless they have their own logo saved.

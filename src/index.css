@@ -192,6 +192,8 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .segmented { width: 100%; gap: 5px; }
 .segmented [data-slot="toggle-group-item"] { flex: 1; min-width: 0; padding-inline: 9px; font-size: 0.75rem; }
 .segmented [data-pressed] { background: var(--accent); color: var(--primary); border-color: var(--primary); }
+.segmented .font-option { flex-direction: column; height: auto; gap: 2px; padding-block: 8px; }
+.font-sample { height: 1.625rem; font-size: 1.0625rem; font-weight: 700; line-height: 1.625rem; }
 .optional { color: var(--muted-foreground); font-size: 0.75rem; font-weight: 450; margin-left: 5px; }
 .advanced-section { padding-block: 10px; }
 .advanced-title { display: flex; align-items: center; gap: 12px; font-size: 0.8125rem; }
