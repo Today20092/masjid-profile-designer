@@ -150,6 +150,19 @@ export default function App() {
     try { await navigator.clipboard.writeText(url); setShareNotice(`Link copied. Anyone who opens it gets their own editable copy of this design.${result.settings.logo ? ' Links leave out your logo; save a settings file to share it.' : ''}`) }
     catch { window.prompt('Copy this link to share your design:', url) }
   }
+  // Link previews cannot show a design (it stays after the #), so the image goes along with the link.
+  async function shareImageAndLink() {
+    if (!result.settings || exporting) return
+    setExporting(true); setShareNotice(''); setShareError('')
+    try {
+      const [file, url] = await Promise.all([renderProfile(result.settings, result.rows, exportScale), shareLink(result.settings)])
+      // The link goes in `text`: many share targets have no separate URL field.
+      await navigator.share({ files: [file], text: `${result.settings.name} prayer times
+${url}` })
+      setShareNotice(`Shared. If only the picture arrived, send the link with Copy share link.${result.settings.logo ? ' The link leaves out your logo; save a settings file to share it.' : ''}`)
+    } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) setShareError('The image and link could not be shared. Use Download PNG and Copy share link instead.') }
+    finally { setExporting(false) }
+  }
   function setEmblem(emblem: Settings['emblem']) {
     setLogoError('')
     if (emblem === 'logo' && !settings.logo) { document.getElementById('logo-file')?.click(); return }
@@ -556,6 +569,7 @@ export default function App() {
           <section className="editor-section">
             <div className="editor-heading"><div><h2 id="share-heading">Share or back up</h2><p>Changes save on this browser automatically. To send this design or keep a copy, use a link or a settings file.</p></div></div>
             <div className="share-actions">
+              {canShareImage && <Button variant="outline" disabled={!result.settings || exporting} onClick={shareImageAndLink}><Share data-icon="inline-start" />Share image and link</Button>}
               <Button variant="outline" disabled={!result.settings} onClick={copyLink}><Link data-icon="inline-start" />Copy share link</Button>
               <Button variant="outline" disabled={!result.settings} onClick={() => { if (result.settings) { saveSettingsFile(result.settings); setShareError(''); setShareNotice('Settings file saved. Open it here any time to restore this design.') } }}><FileDown data-icon="inline-start" />Save settings file</Button>
               <Button variant="outline" onClick={() => document.getElementById('settings-file')?.click()}><FileUp data-icon="inline-start" />Open settings file</Button>

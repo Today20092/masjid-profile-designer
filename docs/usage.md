@@ -42,6 +42,12 @@ If you already have a design saved in this browser, a pop-up shows the new desig
 
 The design travels after the `#` in the link, which browsers do not send to the website. The photo goes only to the AI you chose.
 
+## Sending a design to someone
+
+Under **Share or back up**, **Copy share link** gives a link that opens an editable copy of the design. When a chat app such as Telegram or Messages shows a preview for that link, every link gets the same one: the site name, a description and a picture marked **Sample timetable**. It never shows your times, because the app that builds the preview does not receive the part after the `#`.
+
+To put your times in the chat, use **Share image and link** on a phone that can share files. It opens the share sheet with your timetable image (at the chosen **Image size**) and a message containing the link. Some apps keep the picture and drop the message; check what arrived, and send the link with **Copy share link** if it is missing. Where the button does not appear, use **Download PNG** or **Copy image**, then paste the link from **Copy share link**.
+
 ## Saved settings and privacy
 
 The app stores settings in this browser on this device. Clearing website data removes them. Private browsing or blocked storage can prevent saving; the editor reports this. A different phone or browser starts with its own settings.
