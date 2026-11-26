@@ -199,6 +199,7 @@ input[type="time"], .compact-value output { font-variant-numeric: tabular-nums; 
 .advanced-title > span > span { display: block; color: var(--muted-foreground); font-size: 0.75rem; font-weight: 450; margin-top: 4px; }
 .advanced-fields { padding-top: 24px; }
 .location-status { color: var(--primary); font-size: 0.75rem; line-height: 1.8; }
+.location-status:not(:empty) { margin-top: 8px; }
 .editor-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .edit-actions { display: flex; gap: 4px; }
 .dates-passed { margin: 0; font-size: 0.8125rem; }
