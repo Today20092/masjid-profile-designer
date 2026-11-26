@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { createDefaults, formatTimetable, getDisplayRows, pairGroups, validateSettings } from '../src/schedule.ts'
+import { createDefaults, formatTimetable, fridayServices, getDisplayRows, pairGroups, validateSettings } from '../src/schedule.ts'
 import { THEME_IDS } from '../src/model.ts'
 
 const settings = createDefaults()
@@ -146,3 +146,13 @@ assert.equal(pairGroups(labelled('Jumu‘ah 1', 'Jumu‘ah 2')), null)
 assert.equal(pairGroups(labelled('Jumuah Khutbah', 'Jumuah Iqamah')), null)
 assert.equal(pairGroups(labelled('Khutbah', 'Iqamah', 'Khutbah', 'Iqamah')), null)
 console.log('Paired row grouping passed')
+const services = (...labels: string[]) => fridayServices(labelled(...labels).map((row, i) => ({ ...row, iqamah: `${i}` })))
+assert.deepEqual(services('Jumuah 1 Khutbah', 'Jumuah 1 Iqamah', 'Jumu‘ah 2 - Iqama', 'Jumu‘ah 2 - Khutba')?.map(s => [s.number, s.khutbah, s.iqamah]), [[1, '0', '1'], [2, '3', '2']])
+for (const spelling of ['Jumu\'ah', 'Jummah', 'Jumma', 'Jum\'a']) assert.equal(services(`${spelling} 1 Khutbah`, `${spelling} 1 Iqamah`, '2 Khutbah', '2 Iqamah')?.[0].number, 1, spelling)
+assert.deepEqual(services('Youth (Khutbah)', 'Youth (Iqamah)', 'Jumuah 2 Khutbah', 'Jumuah 2 Iqamah')?.map(s => [s.en, s.number]), [['Youth', 0], ['Jumuah 2', 0]])
+assert.equal(fridayServices(arabicPairs)?.[1].number, 2)
+assert.equal(services('Jumuah 1 Adhan', 'Jumuah 1 Iqamah', 'Jumuah 2 Adhan', 'Jumuah 2 Iqamah'), null)
+assert.equal(services('Jumuah 1 Adhan', 'Jumuah 1 Khutbah', 'Jumuah 1 Iqamah', 'Jumuah 2 Khutbah', 'Jumuah 2 Iqamah'), null)
+assert.equal(services('Jumuah 1 Khutbah', 'Jumuah 1 Khutbah', 'Jumuah 2 Khutbah', 'Jumuah 2 Iqamah'), null)
+assert.equal(services('Jumuah 1 Khutbah', 'Jumuah 1 Iqamah'), null)
+console.log('Friday services passed')

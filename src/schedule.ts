@@ -227,12 +227,34 @@ export function timetableDateLabel(settings: Settings) {
     : format.format(date)
 }
 
-// Khutbah/iqamah pairs ("Jumuah 1 Khutbah", "Jumuah 1 Iqamah"): neighbouring rows whose labels differ only by that word.
+// "Jumuah 1 - Khutbah" → "Jumuah 1": the label without the part of the service it names.
+const serviceName = (label: string) => label.replace(/\b(?:khutbah?|iqamah?|adhan|salah|prayer)\b|الخطبة|خطبة|الإقامة|إقامة|الأذان/gi, ' ')
+  .replace(/\(\s*\)/g, ' ').replace(/\s+/g, ' ').replace(/^[\s\-–—:|·,]+|[\s\-–—:|·,]+$/g, '')
+
+// A timetable made only of khutbah + iqamah pairs, drawn as one line per service. Null for anything else.
+// number is set only when every service is a numbered Jumu‘ah ("Jumuah 2" or a bare "2").
+export function fridayServices(rows: DisplayRow[]) {
+  const services = pairGroups(rows)?.map(({ start, size }) => {
+    const pair = rows.slice(start, start + size)
+    const khutbah = pair.find(row => /\bkhutbah?\b|خطبة/i.test(row.en || row.ar))
+    const iqamah = pair.find(row => row !== khutbah && /\biqamah?\b|إقامة|الإقامة/i.test(row.en || row.ar))
+    if (size !== 2 || !khutbah || !iqamah) return null
+    const en = serviceName(khutbah.en)
+    const ar = serviceName(khutbah.ar)
+    const number = /^(?:(?:jum[‘’'ʼ`]?u?[‘’'ʼ`]?m?a[‘’'ʼ`]?h?|الجمعة)\s*)?#?([1-8])$/i.exec(en || ar)?.[1]
+    return { en, ar, number: number ? Number(number) : 0, khutbah: khutbah.iqamah, iqamah: iqamah.iqamah }
+  })
+  if (!services?.every(service => service !== null)) return null
+  const numbered = services.every(service => service.number)
+  return services.map(service => numbered ? service : { ...service, number: 0 })
+}
+
+// Khutbah/iqamah pairs ("Jumuah 1 Khutbah","Jumuah 1 Iqamah"): neighbouring rows whose labels differ only by that word.
 // Null unless every row belongs to such a group and there are at least two, so other timetables keep row-by-row bands.
 export function pairGroups(rows: DisplayRow[]) {
   const groups: { key: string; start: number; size: number }[] = []
   rows.forEach((row, start) => {
-    const key = (row.en || row.ar).replace(/\b(?:khutbah?|iqamah?|adhan|salah|prayer)\b|الخطبة|خطبة|الإقامة|إقامة|الأذان/gi, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
+    const key = serviceName(row.en || row.ar).toLowerCase()
     const last = groups.at(-1)
     if (last?.key === key) last.size++
     else groups.push({ key, start, size: 1 })

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import type { DisplayRow, Settings, ThemeId } from './model'
+import { JUMUAH_AR, type DisplayRow, type Settings, type ThemeId } from './model'
 import { derivePalette, isLight } from './palette'
-import { pairGroups, relativeWording, timetableDateLabel } from './schedule'
+import { fridayServices, pairGroups, relativeWording, timetableDateLabel } from './schedule'
 
 export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string; surface: string; ink: string; muted: string; gold: string }> = {
   emerald: { name: 'Emerald', background: '#103e36', surface: '#194b41', ink: '#fff8e8', muted: '#b6c9bc', gold: '#e5bd7c' },
@@ -53,9 +53,9 @@ function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number
   if (size < intendedSize * 0.75 && !ctx.canvas.dataset.fitWarning) ctx.canvas.dataset.fitWarning = value
 }
 
-function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, arabic: boolean) {
+function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, arabic: boolean, width = 650) {
   ctx.font = `700 ${size}px ${arabic ? ARABIC : ENGLISH}`
-  if (ctx.measureText(value).width <= 650) return [value]
+  if (ctx.measureText(value).width <= width) return [value]
   const words = value.split(/\s+/)
   let split = 1
   let difference = Infinity
@@ -87,6 +87,53 @@ function clockText(ctx: CanvasRenderingContext2D, value: string, x: number, y: n
 
 export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
   settings.theme === 'custom' ? derivePalette(settings.customColor, settings.customAccent) : ARTWORK_THEMES[settings.theme]
+
+function band(ctx: CanvasRenderingContext2D, halfWidth: number, top: number, height: number, color: string, alpha: number) {
+  ctx.globalAlpha = alpha
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.roundRect(540 - halfWidth, top, halfWidth * 2, height, 12)
+  ctx.fill()
+  ctx.globalAlpha = 1
+}
+
+// Friday-only timetables: one line per service with khutbah and iqamah side by side, so times are never stacked.
+function drawServices(ctx: CanvasRenderingContext2D, settings: Settings, services: NonNullable<ReturnType<typeof fridayServices>>) {
+  const theme = themeColors(settings)
+  const arabicOnly = settings.language === 'ar'
+  const bilingual = settings.language === 'both'
+  const wide = settings.textSize === 'large'
+  const numbered = services[0].number > 0
+  const gap = Math.min(125, 520 / services.length)
+  const firstY = 615 - (services.length - 1) * gap / 2
+  const edgeY = (services.length * gap) / 2 + 75
+  const halfWidth = Math.min(420, Math.sqrt(500 ** 2 - edgeY ** 2) - 12)
+  // Column centres and widths, as fractions of the half width.
+  const [nameX, khutbahX, iqamahX] = [-0.72, -0.08, 0.64].map(x => 540 + x * halfWidth)
+  const nameWidth = halfWidth * 0.46
+  const timeWidth = halfWidth * 0.66
+  const headings = arabicOnly ? [numbered ? 'الجمعة' : 'الصلاة', 'الخطبة', 'الإقامة'] : [numbered ? 'JUMUAH' : 'PRAYER', 'KHUTBAH', 'IQAMAH']
+  const headingSize = (arabicOnly ? 30 : 22) * (wide ? 1.15 : 1)
+  headings.forEach((heading, index) => text(ctx, heading, [nameX, khutbahX, iqamahX][index], 328, index ? timeWidth : nameWidth, headingSize, theme.gold, arabicOnly, 700))
+  const timeSize = Math.min((bilingual ? 42 : 48) * 1.35 * (wide ? 1 : 0.85), gap * 0.6)
+  services.forEach((service, index) => {
+    const y = firstY + index * gap
+    if (index % 2 === 0) band(ctx, halfWidth, y - gap / 2 + 4, gap - 8, theme.ink, isLight(theme.background) ? 0.05 : 0.045)
+    const n = service.number
+    const ordinalAr = n ? JUMUAH_AR[n - 1].split(' ')[1] : ''
+    const primary = n ? (arabicOnly ? ordinalAr : `${n}${['st', 'nd', 'rd'][n - 1] ?? 'th'}`) : arabicOnly ? service.ar || service.en : service.en || service.ar
+    const primaryArabic = arabicOnly ? Boolean(n || service.ar) : !n && !service.en
+    const secondary = bilingual && service.ar && service.en ? (n ? ordinalAr : service.ar) : ''
+    const size = wide ? 48 : 40
+    // A long typed name wraps onto two lines before it has to shrink.
+    const lines = secondary ? [primary] : nameLines(ctx, primary, size, primaryArabic, nameWidth)
+    const stacked = Boolean(secondary) || lines.length > 1
+    lines.forEach((line, i) => text(ctx, line, nameX, stacked ? y + gap * (i ? 0.19 : -0.17) : y, nameWidth, stacked ? size * 0.8 : size, theme.ink, primaryArabic, 700))
+    if (secondary) text(ctx, secondary, nameX, y + gap * 0.22, nameWidth, size * 0.68, theme.ink, true, 700)
+    clockText(ctx, service.khutbah, khutbahX, y, timeWidth, timeSize, theme.ink)
+    clockText(ctx, service.iqamah, iqamahX, y, timeWidth, timeSize, theme.gold)
+  })
+}
 
 function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: DisplayRow[], resolution = 1, logo?: HTMLImageElement) {
   const ctx = canvas.getContext('2d')
@@ -158,6 +205,13 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   ctx.stroke()
   ctx.globalAlpha = 1
 
+  const dateLabel = timetableDateLabel(settings)
+  text(ctx, dateLabel, 540, 914, 490, 28, theme.muted, arabicOnly)
+  if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[؀-ۿ]/.test(settings.footer))
+
+  const services = fridayServices(rows)
+  if (services) return drawServices(ctx, settings, services)
+
   const bothColumns = settings.timeDisplay === 'both'
   // Large uses the wide table and the biggest text that fits; the row caps below keep it inside the circle.
   const wide = settings.textSize === 'large'
@@ -184,14 +238,6 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   const lastY = firstY + (rows.length - 1) * gap
   const edgeY = Math.max(Math.abs(firstY - gap / 2 - 540), Math.abs(lastY + gap / 2 - 540))
   const halfWidth = wide ? Math.min(450, Math.sqrt(500 ** 2 - edgeY ** 2) - 12) : 322
-  const band = (top: number, height: number, color: string, alpha: number) => {
-    ctx.globalAlpha = alpha
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.roundRect(540 - halfWidth, top, halfWidth * 2, height, 12)
-    ctx.fill()
-    ctx.globalAlpha = 1
-  }
   const faint = isLight(theme.background) ? 0.05 : 0.045
   // Paired rows share one band, alternating accent and faint, so each khutbah reads with its iqamah.
   const groups = pairGroups(rows)
@@ -199,7 +245,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   groups?.forEach(({ start, size }, index) => {
     const accent = index % 2 === 0
     if (accent) for (let row = start; row < start + size; row++) onAccent.add(row)
-    band(firstY + start * gap - gap / 2 + 5, size * gap - 10, accent ? theme.gold : theme.ink, accent ? 0.14 : faint)
+    band(ctx, halfWidth, firstY + start * gap - gap / 2 + 5, size * gap - 10,accent ? theme.gold : theme.ink, accent ? 0.14 : faint)
   })
   rows.forEach((row, index) => {
     const y = firstY + index * gap
@@ -207,7 +253,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const rowLabelX = spread(labelX, widthScale)
     const labelWidth = (bothColumns ? 200 : 246) * widthScale
     const valueWidth = timeWidth * widthScale
-    if (!groups && index % 2 === 0) band(y - gap / 2 + 3, gap - 6, theme.ink, faint)
+    if (!groups && index % 2 === 0) band(ctx, halfWidth, y - gap / 2 + 3,gap - 6, theme.ink, faint)
     // Accent text drops below 4.5:1 on the accent band, so those times use ink.
     const timeColor = onAccent.has(index) ? theme.ink : theme.gold
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
@@ -225,10 +271,6 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
       } else clockText(ctx, value, valueX, y, valueWidth, Math.min((bothColumns ? 44 : 56) * timeScale * typeBoost, gap * (wide ? 0.88 : 0.82), timeCap), column === values.length - 1 ? timeColor : theme.ink)
     })
   })
-
-  const dateLabel = timetableDateLabel(settings)
-  text(ctx, dateLabel, 540, 914, 490, 28, theme.muted, arabicOnly)
-  if (settings.footer) text(ctx, settings.footer, 540, 951, 388, 22, theme.muted, /[\u0600-\u06ff]/.test(settings.footer))
 }
 
 export function ProfileArtwork({ settings, rows, className, onFitWarning }: { settings: Settings; rows: DisplayRow[]; className?: string; onFitWarning?: (shrunkText: string) => void }) {

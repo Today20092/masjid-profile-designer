@@ -24,7 +24,7 @@ Under **Top symbol**, keep the small star above the masjid name, choose **None**
 
 A message below the full preview names any text that was substantially reduced to fit; tap it to jump to the field that holds that text. Shorten it, use fewer rows, or show one time column to give that text more room.
 
-When the whole timetable is Khutbah and Iqamah pairs (for example “Jumuah 1 Khutbah”, “Jumuah 1 Iqamah”, then the same for Jumuah 2), each pair shares one colour band. The bands alternate between the accent colour and a faint shade so the services are easy to tell apart.
+When the whole timetable is Khutbah and Iqamah pairs for two or more services (for example “Jumuah 1 Khutbah”, “Jumuah 1 Iqamah”, then the same for Jumuah 2), the image shows one line per service with **Khutbah** and **Iqamah** columns. Numbered Jumuahs appear as 1st, 2nd and so on; other names appear as typed. Other timetables made of grouped rows, such as an Adhan, Khutbah and Iqamah for each service, keep one row per time and give each group its own colour band.
 
 Emerald, Midnight, Ivory, Plum, Rose, and Charcoal are preset artwork themes. Plum pairs deep purple with warm gold; Rose uses a light blush surface with burgundy text; Charcoal pairs neutral dark surfaces with cream and champagne. Free-form fonts are deferred. The editor's theme and the exported artwork are separate.
 
