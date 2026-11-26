@@ -18,6 +18,10 @@ assert.throws(() => validateSettings({ ...settings, customColor: 'red' }))
 { const { customColor: _c, customAccent: _a, ...legacy } = settings; assert.equal(validateSettings(legacy).customColor, '#1f5c4a') }
 assert.throws(() => validateSettings({ ...settings, theme: 'missing' }), /theme/)
 assert.throws(() => validateSettings({ ...settings, textSize: 'huge' }), /text size/)
+// Font style: older designs get Clear, and a stated choice is kept.
+{ const { fontStyle: _f, ...legacy } = settings; assert.equal(validateSettings(legacy).fontStyle, 'clear') }
+assert.equal(validateSettings({ ...settings, fontStyle: 'classic' }).fontStyle, 'classic')
+assert.throws(() => validateSettings({ ...settings, fontStyle: 'comic' }), /font style/)
 // Top symbol: older designs keep the star; a logo must be a small image data URL.
 { const { emblem: _e, logo: _l, ...legacy } = settings; assert.equal(validateSettings(legacy).emblem, 'star') }
 assert.equal(validateSettings({ ...settings, emblem: 'none' }).emblem, 'none')

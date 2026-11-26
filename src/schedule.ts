@@ -104,6 +104,8 @@ export function validateSettings(value: unknown): Settings {
     use24Hour: boolean(s.use24Hour, '24-hour format'),
     // Older designs and links may say "extra" (now the same as Large) or carry a tableWidth, which text size now decides.
     textSize: s.textSize === undefined ? 'standard' : s.textSize === 'extra' ? 'large' : choice(s.textSize, ['standard', 'large'], 'prayer text size'),
+    // Designs without a font style, including older ones, get the default.
+    fontStyle: s.fontStyle === undefined ? 'clear' : choice(s.fontStyle, ['clear', 'classic', 'bold'], 'font style'),
     // Older designs have no top symbol setting and keep the star.
     emblem: s.emblem === undefined ? 'star' : choice(s.emblem, ['star', 'none', 'logo'], 'top symbol'),
     logo: s.logo === undefined || s.logo === '' ? '' : logo(s.logo),
@@ -119,7 +121,7 @@ export function createDefaults(): Settings {
     version: 1, name: 'Masjid Abu Bakr', nameAr: 'مسجد أبو بكر', location: '11010 N 30th St, Tampa, FL',
     latitude: 28.048619, longitude: -82.426613, timezone: 'America/New_York', method: 'NorthAmerica', madhab: 'standard',
     date: `${part('year')}-${part('month')}-${part('day')}`, endDate: '', language: 'both', theme: 'emerald', customColor: '#1f5c4a', customAccent: '', timeDisplay: 'iqamah',
-    use24Hour: false, textSize: 'standard', emblem: 'star', logo: '', footer: '', customRows: [],
+    use24Hour: false, textSize: 'standard', fontStyle: 'clear', emblem: 'star', logo: '', footer: '', customRows: [],
     prayers: Object.fromEntries(PRAYERS.map((prayer, i) => [prayer.id, {
       enabled: prayer.id !== 'sunrise', iqamahMode: prayer.id === 'maghrib' ? 'after' : 'fixed',
       fixed: fixed[i], delay: prayer.id === 'maghrib' ? 7 : 15, adjustment: 0,

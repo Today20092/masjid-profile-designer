@@ -13,16 +13,22 @@ export const ARTWORK_THEMES: Record<ThemeId, { name: string; background: string;
 }
 
 const SIZE = 1080
-const ENGLISH = '"Manrope Variable"'
-const ARABIC = '"Noto Naskh Arabic"'
+// Times keep one typeface in every style, so their sizing never changes.
+const TIMES = '"Manrope Variable"'
+// Each stack ends in a fuller face for letters the first one lacks. stacked shrinks two-line labels in tall faces.
+export const ARTWORK_FONTS: Record<Settings['fontStyle'], { name: string; en: string; ar: string; stacked: number }> = {
+  clear: { name: 'Clear', en: `"Almarai", ${TIMES}`, ar: '"Almarai", "Noto Naskh Arabic"', stacked: 1 },
+  classic: { name: 'Classic', en: TIMES, ar: '"Noto Naskh Arabic"', stacked: 1 },
+  bold: { name: 'Bold', en: `"Alexandria Variable", ${TIMES}`, ar: '"Alexandria Variable", "Noto Naskh Arabic"', stacked: 0.85 },
+}
+// Set by drawProfile; drawing is synchronous, so one canvas never sees another's style.
+let font = ARTWORK_FONTS.clear
 
-async function loadFonts() {
-  await Promise.all([
-    document.fonts.load(`500 40px ${ENGLISH}`),
-    document.fonts.load(`700 40px ${ENGLISH}`),
-    document.fonts.load(`400 40px ${ARABIC}`, 'مسجد الفجر'),
-    document.fonts.load(`700 40px ${ARABIC}`, 'مسجد الفجر'),
-  ])
+async function loadFonts(settings: Settings, rows: DisplayRow[]) {
+  const { en, ar } = ARTWORK_FONTS[settings.fontStyle]
+  // The design's own letters, so every subset it needs is ready before drawing.
+  const sample = [settings.name, settings.nameAr, settings.location, settings.footer, ...rows.flatMap(row => [row.en, row.ar]), 'Aa 0123 مسجد الفجر'].join(' ')
+  await Promise.all([TIMES, en, ar].flatMap(family => [500, 700].map(weight => document.fonts.load(`${weight} 40px ${family}`, sample))))
 }
 
 const logos = new Map<string, Promise<HTMLImageElement>>()
@@ -37,13 +43,12 @@ function loadLogo(settings: Settings) {
   return logos.get(settings.logo)!
 }
 
-function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string, arabic = false, weight = 500) {
+function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string, arabic = false, weight = 500, family = arabic ? font.ar : font.en) {
   const intendedSize = size
   ctx.fillStyle = color
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.direction = arabic ? 'rtl' : 'ltr'
-  const family = arabic ? ARABIC : ENGLISH
   ctx.font = `${weight} ${size}px ${family}`
   while (ctx.measureText(value).width > width && size > 10) {
     size -= 1
@@ -54,7 +59,7 @@ function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number
 }
 
 function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, arabic: boolean, width = 650) {
-  ctx.font = `700 ${size}px ${arabic ? ARABIC : ENGLISH}`
+  ctx.font = `700 ${size}px ${arabic ? font.ar : font.en}`
   if (ctx.measureText(value).width <= width) return [value]
   const words = value.split(/\s+/)
   let split = 1
@@ -72,17 +77,17 @@ function nameLines(ctx: CanvasRenderingContext2D, value: string, size: number, a
 
 function clockText(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size: number, color: string) {
   const clock = /^(\d{1,2}:\d{2}) (AM|PM)$/.exec(value)
-  if (!clock) return text(ctx, value || '—', x, y, width, size, color, false, 700)
+  if (!clock) return text(ctx, value || '—', x, y, width, size, color, false, 700, TIMES)
   const measure = (value: string, pixels: number) => {
-    ctx.font = `700 ${pixels}px ${ENGLISH}`
+    ctx.font = `700 ${pixels}px ${TIMES}`
     return ctx.measureText(value).width
   }
   while (measure(clock[1], size) + measure(clock[2], size * 0.5) + size * 0.16 > width && size > 10) size -= 1
   const digitsWidth = measure(clock[1], size)
   const suffixWidth = measure(clock[2], size * 0.5)
   const left = x - (digitsWidth + suffixWidth + size * 0.16) / 2
-  text(ctx, clock[1], left + digitsWidth / 2, y, digitsWidth + 1, size, color, false, 700)
-  text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.5, color, false, 700)
+  text(ctx, clock[1], left + digitsWidth / 2, y, digitsWidth + 1, size, color, false, 700, TIMES)
+  text(ctx, clock[2], left + digitsWidth + size * 0.16 + suffixWidth / 2, y + size * 0.13, suffixWidth + 1, size * 0.5, color, false, 700, TIMES)
 }
 
 export const themeColors = (settings: Pick<Settings, 'theme' | 'customColor' | 'customAccent'>) =>
@@ -128,8 +133,8 @@ function drawServices(ctx: CanvasRenderingContext2D, settings: Settings, service
     // A long typed name wraps onto two lines before it has to shrink.
     const lines = secondary ? [primary] : nameLines(ctx, primary, size, primaryArabic, nameWidth)
     const stacked = Boolean(secondary) || lines.length > 1
-    lines.forEach((line, i) => text(ctx, line, nameX, stacked ? y + gap * (i ? 0.19 : -0.17) : y, nameWidth, stacked ? size * 0.8 : size, theme.ink, primaryArabic, 700))
-    if (secondary) text(ctx, secondary, nameX, y + gap * 0.22, nameWidth, size * 0.68, theme.ink, true, 700)
+    lines.forEach((line, i) => text(ctx, line, nameX, stacked ? y + gap * (i ? 0.19 : -0.17) : y, nameWidth, stacked ? size * 0.8 * font.stacked : size, theme.ink, primaryArabic, 700))
+    if (secondary) text(ctx, secondary, nameX, y + gap * 0.22, nameWidth, size * 0.68 * font.stacked, theme.ink, true, 700)
     clockText(ctx, service.khutbah, khutbahX, y, timeWidth, timeSize, theme.ink)
     clockText(ctx, service.iqamah, iqamahX, y, timeWidth, timeSize, theme.gold)
   })
@@ -143,6 +148,7 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
   // Drawing stays in 1080-unit coordinates; the transform renders it at 2× or 3× resolution.
   ctx.setTransform(resolution, 0, 0, resolution, 0, 0)
   delete canvas.dataset.fitWarning
+  font = ARTWORK_FONTS[settings.fontStyle]
   const theme = themeColors(settings)
   const gradient = ctx.createRadialGradient(410, 240, 30, 540, 540, 760)
   gradient.addColorStop(0, theme.surface)
@@ -259,9 +265,9 @@ function drawProfile(canvas: HTMLCanvasElement, settings: Settings, rows: Displa
     const primaryLabel = arabicOnly ? row.ar || row.en : row.en || row.ar
     const primaryArabic = arabicOnly ? Boolean(row.ar) : !row.en
     const secondaryLabel = bilingual && row.ar && row.en
-    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.42 : 0.7))
+    const labelSize = Math.min((bilingual ? 29 : 38) * scale * typeBoost, gap * (secondaryLabel ? 0.42 : 0.7)) * (secondaryLabel ? font.stacked : 1)
     text(ctx, primaryLabel, rowLabelX, secondaryLabel ? y - (wide ? gap * 0.2 : Math.min(13 * scale, gap * 0.25)) : y, labelWidth, labelSize, theme.ink, primaryArabic, 700)
-    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.24 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost, gap * 0.43, labelSize), theme.ink, true, 700)
+    if (secondaryLabel) text(ctx, row.ar, rowLabelX, y + (wide ? gap * 0.24 : Math.min(18 * scale, gap * 0.28)), labelWidth, Math.min(28 * scale * typeBoost * font.stacked, gap * 0.43 * font.stacked, labelSize), theme.ink, true, 700)
     const values = bothColumns ? [row.adhan, row.iqamah] : [settings.timeDisplay === 'adhan' ? row.adhan : row.iqamah]
     values.forEach((value, column) => {
       const relative = row.relativeMinutes !== undefined && settings.timeDisplay !== 'adhan' && column === values.length - 1
@@ -279,7 +285,7 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
   const [error, setError] = useState('')
   useEffect(() => {
     let cancelled = false
-    Promise.all([loadFonts(), loadLogo(settings)]).then(([, logo]) => {
+    Promise.all([loadFonts(settings, rows), loadLogo(settings)]).then(([, logo]) => {
       if (cancelled || !canvasRef.current) return
       drawProfile(canvasRef.current, settings, rows, 1, logo)
       onFitWarning?.(canvasRef.current.dataset.fitWarning ?? '')
@@ -305,7 +311,7 @@ export function ProfileArtwork({ settings, rows, className, onFitWarning }: { se
 }
 
 export async function renderProfile(settings: Settings, rows: DisplayRow[], scale = 1) {
-  const [, logo] = await Promise.all([loadFonts(), loadLogo(settings)])
+  const [, logo] = await Promise.all([loadFonts(settings, rows), loadLogo(settings)])
   const canvas = document.createElement('canvas')
   drawProfile(canvas, settings, rows, scale, logo)
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('The PNG could not be created. Please try again.')), 'image/png'))
