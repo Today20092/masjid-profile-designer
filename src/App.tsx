@@ -18,6 +18,7 @@ import { createDefaults, designForAi, formatTimetable, getDisplayRows, settingsF
 import { ARTWORK_THEMES, ProfileArtwork, downloadProfile, renderProfile } from './ProfileArtwork'
 import { derivePalette, isLight } from './palette'
 import { PhotoPalettePicker } from './PhotoPalettePicker'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { ColorPicker, ColorPickerArea, ColorPickerHue, ColorPickerInput, ColorPickerSwatch, ColorPickerSwatches } from '@/components/ui/color-picker'
 
 function restore() {
@@ -29,7 +30,6 @@ function restore() {
   }
 }
 
-const showAsModal = (dialog: HTMLDialogElement | null) => { if (dialog && !dialog.open) dialog.showModal() }
 const revealNotice = (notice: HTMLDivElement | null) => { notice?.scrollIntoView({ block: 'nearest' }) }
 
 function NumberField({ id, label, value, onChange, min, max, step = 1, compact = false }: {
@@ -388,13 +388,20 @@ export default function App() {
     <main id="main" className="studio-shell" data-preview-pinned={previewPinned} onBlurCapture={() => dispatch({ type: 'end-group' })}>
       <section className="intro"><h1 id="page-title">Your masjid’s prayer times.</h1><p>Edit your timetable, choose a design, and download your group photo.</p><nav className="studio-shortcuts" aria-label="Timetable sections"><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#times-heading">Edit times</a><a className={cn(buttonVariants({ variant: 'outline', size: 'lg' }))} href="#appearance-heading">Choose design</a></nav></section>
       {linkMessage && <div ref={revealNotice} className="notices link-notice" aria-live="polite"><Alert variant={linkMessage.ok ? 'default' : 'destructive'}>{linkMessage.ok ? <Check /> : <CircleHelp />}<AlertTitle>{linkMessage.ok ? 'Shared design opened' : 'Design not opened'}</AlertTitle><AlertDescription>{linkMessage.text}</AlertDescription></Alert></div>}
-      {/* Asked in a modal over the page, with the design shown, so a tapped link is answered before anything else. Esc and Back keep the current design. */}
-      {incomingPreview && <dialog ref={showAsModal} className="incoming-dialog" aria-labelledby="incoming-title" onClose={() => acceptIncoming(false)}>
-        <h2 id="incoming-title">Use the shared design for {incomingPreview.settings.name}?</h2>
-        <p>This link wants to replace the design on this screen. You can Undo afterwards.</p>
-        <div className="incoming-artwork"><ProfileArtwork settings={incomingPreview.settings} rows={incomingPreview.rows} /></div>
-        <div className="share-choice"><Button size="lg" onClick={() => acceptIncoming(true)}>Use shared design</Button><Button size="lg" variant="outline" onClick={() => acceptIncoming(false)}>Keep my design</Button></div>
-      </dialog>}
+      {/* Asked over the page, with the design shown, so a tapped link is answered before anything else. Cancel and Esc keep the current design. */}
+      <AlertDialog open={Boolean(incomingPreview)} onOpenChange={open => { if (!open) acceptIncoming(false) }}>
+        {incomingPreview && <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Use the shared design for {incomingPreview.settings.name}?</AlertDialogTitle>
+            <AlertDialogDescription>This link wants to replace the design on this screen. You can Undo afterwards.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="mx-auto w-[min(100%,42dvh)]"><ProfileArtwork settings={incomingPreview.settings} rows={incomingPreview.rows} /></div>
+          <AlertDialogFooter>
+            <AlertDialogCancel size="lg">Keep my design</AlertDialogCancel>
+            <AlertDialogAction size="lg" onClick={() => acceptIncoming(true)}>Use shared design</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>}
+      </AlertDialog>
       <div className="studio-grid">
         <section className="preview-column" aria-labelledby="preview-title"><div className="preview-sticky">
           <div className="section-topline"><h2 id="preview-title" tabIndex={-1}>Your profile image</h2><span className="live-label"><span />Live preview</span></div>
